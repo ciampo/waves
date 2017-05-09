@@ -2,16 +2,17 @@ import Easing from './easing.js';
 import utils from './utils.js';
 import Wave from './wave.js';
 
+const DEVICE_PIXEL_RATIO = window.devicePixelRatio;
+
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
-const gridSize = 20;
-const radius = 200;
-const decay = 400;
+const gridSize = 20 * DEVICE_PIXEL_RATIO;
+const radius = 200 * DEVICE_PIXEL_RATIO;
+const decay = 400 * DEVICE_PIXEL_RATIO;
 const dotColor = "#ffffff";
 const lineColor = "#eeeeee";
 
-let canvasBCR;
 let cols, rows;
 let offsetX, offsetY;
 let mouseX, mouseY;
@@ -19,29 +20,34 @@ let waves = [];
 
 // Compute vars.
 function setup() {
-  canvasBCR = canvas.getBoundingClientRect();
-
-  canvas.width = canvasBCR.width;
-  canvas.height = canvasBCR.height;
+  canvas.setAttribute('width', `${window.innerWidth * DEVICE_PIXEL_RATIO}px`);
+  canvas.setAttribute('height', `${window.innerHeight * DEVICE_PIXEL_RATIO}px`);
 
   cols = Math.floor(canvas.width / gridSize);
   rows = Math.floor(canvas.height / gridSize);
 
-  offsetX = Math.floor(canvasBCR.width - cols * gridSize) / 2;
-  offsetY = Math.floor(canvasBCR.height - rows * gridSize) / 2;
+  offsetX = Math.floor(canvas.width - cols * gridSize) / 2;
+  offsetY = Math.floor(canvas.height - rows * gridSize) / 2;
 }
 
 
 function onClick(evt) {
-  var coords = utils.getMouseCoordinates(evt, canvasBCR);
+  const coords = utils.getMouseCoordinates(evt, {
+    top: 0,
+    right: canvas.width,
+    bottom: canvas.height,
+    left: 0,
+    width: canvas.width,
+    height: canvas.height
+  }, DEVICE_PIXEL_RATIO);
 
   const maxX = Math.max(Math.abs(coords.x),
-      Math.abs(coords.x - canvasBCR.width));
+      Math.abs(coords.x - canvas.width));
   const maxY = Math.max(Math.abs(coords.y),
-      Math.abs(coords.y - canvasBCR.height));
+      Math.abs(coords.y - canvas.height));
 
   waves.push(new Wave(coords.x, coords.y,
-      Math.sqrt(maxX * maxX + maxY * maxY)));
+      Math.sqrt(maxX * maxX + maxY * maxY), 10 * DEVICE_PIXEL_RATIO));
 }
 
 // Interpolate a value between min/max.
@@ -58,7 +64,7 @@ function getDotSize(dotX, dotY) {
     }
   }
 
-  return dotSize;
+  return dotSize * DEVICE_PIXEL_RATIO;
 }
 
 // Draw a grid of dots.
