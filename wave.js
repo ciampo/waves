@@ -1,5 +1,5 @@
-class Wave {
-  constructor(x, y, r, v = 20) {
+export default class Wave {
+  constructor(x, y, r, v = 10) {
     this.x = x;
     this.y = y;
     this.r = r;

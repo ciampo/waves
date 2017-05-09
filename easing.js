@@ -1,4 +1,4 @@
-class Easing {
+export default class Easing {
 
   static linear(t) {
     return t;

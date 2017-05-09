@@ -1,3 +1,7 @@
+import Easing from './easing.js';
+import utils from './utils.js';
+import Wave from './wave.js';
+
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
@@ -29,7 +33,7 @@ function setup() {
 
 
 function onClick(evt) {
-  var coords = Utils.getMouseCoordinates(evt, canvasBCR);
+  var coords = utils.getMouseCoordinates(evt, canvasBCR);
 
   const maxX = Math.max(Math.abs(coords.x),
       Math.abs(coords.x - canvasBCR.width));

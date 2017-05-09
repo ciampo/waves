@@ -1,5 +1,5 @@
-class Utils {
-  static getMouseCoordinates(evt, canvasBCR) {
+let utils = {
+  getMouseCoordinates: (evt, canvasBCR) => {
     var toReturn = {};
 
     toReturn.x = Math.round((evt.clientX - canvasBCR.left) /
@@ -9,4 +9,6 @@ class Utils {
 
     return toReturn;
   }
-}
+};
+
+export default utils;
