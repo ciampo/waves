@@ -1,14 +1,10 @@
-let utils = {
-  getMouseCoordinates: (evt, canvasBCR, devicePxRatio = 1) => {
-    let toReturn = {};
+export function getMouseCoordinates(evt, canvasBCR, devicePxRatio = 1) {
+  let toReturn = {};
 
-    toReturn.x = Math.round(((evt.clientX * devicePxRatio) - canvasBCR.left) /
-        (canvasBCR.right - canvasBCR.left) * canvasBCR.width);
-    toReturn.y = Math.round(((evt.clientY * devicePxRatio) - canvasBCR.top) /
-      (canvasBCR.bottom - canvasBCR.top) * canvasBCR.height);
+  toReturn.x = Math.round(((evt.clientX * devicePxRatio) - canvasBCR.left) /
+      (canvasBCR.right - canvasBCR.left) * canvasBCR.width);
+  toReturn.y = Math.round(((evt.clientY * devicePxRatio) - canvasBCR.top) /
+    (canvasBCR.bottom - canvasBCR.top) * canvasBCR.height);
 
-    return toReturn;
-  }
+  return toReturn;
 };
-
-export default utils;

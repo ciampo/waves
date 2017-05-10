@@ -1,5 +1,5 @@
 import Easing from './easing.js';
-import utils from './utils.js';
+import * as utils from './utils.js';
 import Wave from './wave.js';
 
 const DEVICE_PIXEL_RATIO = window.devicePixelRatio;
