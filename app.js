@@ -7,16 +7,22 @@ const DEVICE_PIXEL_RATIO = window.devicePixelRatio;
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
-const gridSize = 20 * DEVICE_PIXEL_RATIO;
+const gridSize = 30 * DEVICE_PIXEL_RATIO;
 const radius = 200 * DEVICE_PIXEL_RATIO;
-const decay = 400 * DEVICE_PIXEL_RATIO;
-const dotColor = "#ffffff";
-const lineColor = "#eeeeee";
+const crestDecay = 400 * DEVICE_PIXEL_RATIO;
+const dotSizeFactor = 4;
+const dotPositionFactor = 1 / 20;
+
+const dotColor = '#ffffff';
+const lineColor = '#ff0000';
+
+const dotsOffet = 100;
 
 let cols, rows;
 let offsetX, offsetY;
-let mouseX, mouseY;
+let mouseX = 0, mouseY = 0;
 let waves = [];
+let canvasDiagonal;
 
 // Compute vars.
 function setup() {
@@ -26,56 +32,71 @@ function setup() {
   cols = Math.floor(canvas.width / gridSize);
   rows = Math.floor(canvas.height / gridSize);
 
+  canvasDiagonal = utils.getDistance2d(0, 0, canvas.width, canvas.height);
+
   offsetX = Math.floor(canvas.width - cols * gridSize) / 2;
   offsetY = Math.floor(canvas.height - rows * gridSize) / 2;
+
+  ctx.fillStyle = dotColor;
+  ctx.strokeStyle = lineColor;
 }
 
 
 function onClick(evt) {
-  const coords = utils.getMouseCoordinates(evt, {
-    top: 0,
-    right: canvas.width,
-    bottom: canvas.height,
-    left: 0,
-    width: canvas.width,
-    height: canvas.height
-  }, DEVICE_PIXEL_RATIO);
-
-  const maxX = Math.max(Math.abs(coords.x),
-      Math.abs(coords.x - canvas.width));
-  const maxY = Math.max(Math.abs(coords.y),
-      Math.abs(coords.y - canvas.height));
+  const coords = utils.getMouseCoordinates(evt,
+      utils.createCanvasFullScreenBCR(canvas), DEVICE_PIXEL_RATIO);
+  const maxX = utils.absMax(coords.x, coords.x - canvas.width);
+  const maxY = utils.absMax(coords.y, coords.y - canvas.height);
 
   waves.push(new Wave(coords.x, coords.y,
-      Math.sqrt(maxX * maxX + maxY * maxY), 10 * DEVICE_PIXEL_RATIO));
+      Math.sqrt(maxX * maxX + maxY * maxY) + crestDecay,
+      canvasDiagonal + crestDecay, 8 * DEVICE_PIXEL_RATIO, Easing.easeOutQuad));
 }
 
 // Interpolate a value between min/max.
 function getDotSize(dotX, dotY) {
   let dotSize = 1;
-  let variableSize = 0;
 
   for (let wave of waves) {
-    const distFromWave = Math.abs(Math.sqrt((dotX - wave.x) * (dotX - wave.x) +
-      (dotY - wave.y) * (dotY - wave.y)) - Easing.easeOutQuad(wave.crest) * wave.r);
+    const crestDist = wave.distanceFromCrest(dotX, dotY);
 
-    if (distFromWave <= decay) {
-      dotSize += 8 * Easing.easeInQuint(1 - distFromWave / decay);
+    if (crestDist <= crestDecay) {
+      dotSize += dotSizeFactor * Easing.easeInQuart(1 - crestDist / crestDecay);
     }
   }
 
   return dotSize * DEVICE_PIXEL_RATIO;
 }
 
+function getDotOffsetPosition(dotX, dotY) {
+  let toReturn = {x: dotX,  y: dotY};
+
+  for (let wave of waves) {
+    const crestDist = wave.distanceFromCrest(dotX, dotY);
+
+    if (crestDist <= crestDecay) {
+      const angle = utils.getAngleBetweenPoints(dotX, dotY, wave.x, wave.y);
+      const moveFactor = (crestDecay - crestDist) * dotPositionFactor;
+
+      toReturn.x -= moveFactor * Math.cos(angle);
+      toReturn.y -= moveFactor * Math.sin(angle);
+    }
+  }
+
+  return toReturn;
+}
+
 // Draw a grid of dots.
-function grid() {
+function drawGrid() {
   for (let x = 0; x <= cols; x++) {
     for (let y = 0; y <= rows; y++) {
-      const dotX = x * gridSize + offsetX;
-      const dotY = y * gridSize + offsetY;
-      const size = getDotSize(dotX, dotY);
+      const dotPosition = getDotOffsetPosition(
+          x * gridSize + offsetX, y * gridSize + offsetY);
 
-      ctx.fillRect(dotX - size / 2, dotY - size / 2, size, size);
+      const size = getDotSize(dotPosition.x, dotPosition.y);
+
+      ctx.fillRect(dotPosition.x - size / 2, dotPosition.y - size / 2,
+          size, size);
     }
   }
 }
@@ -89,23 +110,21 @@ function strokeCircle(x, y, r) {
 
 // Draw entry point (rendering loop).
 function draw(ts) {
+  requestAnimationFrame(draw);
+
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  ctx.fillStyle = dotColor;
-  ctx.strokeStyle = "#ff0000";
-
-  grid();
+  drawGrid();
 
   // Update waves.
   for (let [index, wave] of waves.entries()) {
     // Draw
-    // strokeCircle(wave.x, wave.y, Easing.easeOutQuad(wave.crest) * wave.r);
+    // const crestR = wave.getEasedCrestValue();
+    // strokeCircle(wave.x, wave.y, crestR);
 
-    wave.crest = ((wave.crest * wave.r) + wave.v) / wave.r;
-    if (wave.crest >= 1) waves.splice(index, 1);
+    wave.grow();
+    if (wave.isExpired()) waves.splice(index, 1);
   }
-
-  requestAnimationFrame(draw);
 }
 
 // Draw entry point
