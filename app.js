@@ -1,4 +1,4 @@
-import Easing from './easing.js';
+import * as easing from './easing.js';
 import * as utils from './utils.js';
 import Wave from './wave.js';
 
@@ -50,7 +50,7 @@ function onClick(evt) {
 
   waves.push(new Wave(coords.x, coords.y,
       Math.sqrt(maxX * maxX + maxY * maxY) + crestDecay,
-      canvasDiagonal + crestDecay, 8 * DEVICE_PIXEL_RATIO, Easing.easeOutQuad));
+      canvasDiagonal + crestDecay, 8 * DEVICE_PIXEL_RATIO, easing.easeOutQuad));
 }
 
 // Interpolate a value between min/max.
@@ -61,7 +61,7 @@ function getDotSize(dotX, dotY) {
     const crestDist = wave.distanceFromCrest(dotX, dotY);
 
     if (crestDist <= crestDecay) {
-      dotSize += dotSizeFactor * Easing.easeInQuart(1 - crestDist / crestDecay);
+      dotSize += dotSizeFactor * easing.easeInQuart(1 - crestDist / crestDecay);
     }
   }
 
