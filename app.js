@@ -42,7 +42,7 @@ function setup() {
 }
 
 
-function onClick(evt) {
+function onPointerUp(evt) {
   const coords = utils.getMouseCoordinates(evt,
       utils.createCanvasFullScreenBCR(canvas), DEVICE_PIXEL_RATIO);
   const maxX = utils.absMax(coords.x, coords.x - canvas.width);
@@ -135,7 +135,7 @@ function update() {
 
 // Event listeners
 window.addEventListener('resize', update, false);
-canvas.addEventListener('click', onClick, false);
+canvas.addEventListener('pointerup', onPointerUp, false);
 
 // Start sketch
 update();
