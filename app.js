@@ -1,44 +1,43 @@
 import * as easing from './easing.js';
 import * as utils from './utils.js';
 import Wave from './wave.js';
+import Grid from './grid.js';
 
 const DEVICE_PIXEL_RATIO = window.devicePixelRatio;
 
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
-const gridSize = 30 * DEVICE_PIXEL_RATIO;
+const gridGap = 30 * DEVICE_PIXEL_RATIO;
+const gridDotSize = 2;
 const radius = 200 * DEVICE_PIXEL_RATIO;
 const crestDecay = 400 * DEVICE_PIXEL_RATIO;
+const crestVelocity = 12 * DEVICE_PIXEL_RATIO;
 const dotSizeFactor = 3;
 const dotPositionFactor = 1 / 20;
-
-const dotColor = '#ffffff';
-const lineColor = '#ff0000';
-
 const dotsOffet = 100;
 
-let cols, rows;
-let offsetX, offsetY;
-let mouseX = 0, mouseY = 0;
+let grid;
 let waves = [];
 let canvasDiagonal;
 
 // Compute vars.
-function setup() {
+function update() {
   canvas.setAttribute('width', `${window.innerWidth * DEVICE_PIXEL_RATIO}px`);
   canvas.setAttribute('height', `${window.innerHeight * DEVICE_PIXEL_RATIO}px`);
 
-  cols = Math.floor(canvas.width / gridSize);
-  rows = Math.floor(canvas.height / gridSize);
-
   canvasDiagonal = utils.getDistance2d(0, 0, canvas.width, canvas.height);
 
-  offsetX = Math.floor(canvas.width - cols * gridSize) / 2;
-  offsetY = Math.floor(canvas.height - rows * gridSize) / 2;
+  ctx.fillStyle = '#ffffff';
 
-  ctx.fillStyle = dotColor;
-  ctx.strokeStyle = lineColor;
+  // Update grid points.
+  if (!grid) {
+    grid = new Grid(canvas.width, canvas.height, gridGap, gridDotSize);
+  } else {
+    grid.width = canvas.width;
+    grid.height = canvas.height;
+  }
+  grid.update();
 }
 
 
@@ -91,24 +90,21 @@ function getDotOffsetPosition(dotX, dotY) {
 
 // Draw a grid of dots.
 function drawGrid() {
-  for (let x = 0; x <= cols; x++) {
-    for (let y = 0; y <= rows; y++) {
-      const dotPosition = getDotOffsetPosition(
-          x * gridSize + offsetX, y * gridSize + offsetY);
+  for (let p of grid.points) {
+    const dotPosition = getDotOffsetPosition(p.x, p.y);
 
-      const size = getDotSize(dotPosition.x, dotPosition.y);
+    const size = getDotSize(dotPosition.x, dotPosition.y);
 
-      ctx.fillRect(dotPosition.x - size / 2, dotPosition.y - size / 2,
-          size, size);
-    }
+    ctx.fillRect(dotPosition.x - size / 2, dotPosition.y - size / 2,
+        size, size);
   }
 }
 
-function strokeCircle(x, y, r) {
+function fillCircle(x, y, r) {
   ctx.beginPath();
   ctx.arc(x, y, r, 0, Math.PI * 2, true);
   ctx.closePath();
-  ctx.stroke();
+  ctx.fill();
 }
 
 // Draw entry point (rendering loop).
@@ -123,7 +119,7 @@ function draw(ts) {
   for (let [index, wave] of waves.entries()) {
     // Draw
     // const crestR = wave.getEasedCrestValue();
-    // strokeCircle(wave.x, wave.y, crestR);
+    // fillCircle(wave.x, wave.y, crestR);
 
     wave.grow();
     if (wave.isExpired()) waves.splice(index, 1);
@@ -131,8 +127,8 @@ function draw(ts) {
 }
 
 // Draw entry point
-function update() {
-  setup();
+function start() {
+  update();
   requestAnimationFrame(draw);
 }
 
@@ -141,4 +137,4 @@ window.addEventListener('resize', update, false);
 canvas.addEventListener('pointerup', onPointerUp, false);
 
 // Start sketch
-update();
+start();
