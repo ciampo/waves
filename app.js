@@ -10,7 +10,7 @@ const ctx = canvas.getContext("2d");
 const gridSize = 30 * DEVICE_PIXEL_RATIO;
 const radius = 200 * DEVICE_PIXEL_RATIO;
 const crestDecay = 400 * DEVICE_PIXEL_RATIO;
-const dotSizeFactor = 4;
+const dotSizeFactor = 3;
 const dotPositionFactor = 1 / 20;
 
 const dotColor = '#ffffff';
@@ -50,18 +50,18 @@ function onPointerUp(evt) {
 
   waves.push(new Wave(coords.x, coords.y,
       Math.sqrt(maxX * maxX + maxY * maxY) + crestDecay,
-      canvasDiagonal + crestDecay, 8 * DEVICE_PIXEL_RATIO, easing.easeOutQuad));
+      canvasDiagonal + crestDecay, 12 * DEVICE_PIXEL_RATIO, easing.easeOutQuad));
 }
 
 // Interpolate a value between min/max.
 function getDotSize(dotX, dotY) {
-  let dotSize = 1;
+  let dotSize = 2;
 
   for (let wave of waves) {
     const crestDist = wave.distanceFromCrest(dotX, dotY);
 
     if (crestDist <= crestDecay) {
-      dotSize += dotSizeFactor * easing.easeInQuart(1 - crestDist / crestDecay);
+      dotSize += dotSizeFactor * easing.easeInCubic(1 - crestDist / crestDecay);
     }
   }
 
@@ -76,7 +76,10 @@ function getDotOffsetPosition(dotX, dotY) {
 
     if (crestDist <= crestDecay) {
       const angle = utils.getAngleBetweenPoints(dotX, dotY, wave.x, wave.y);
-      const moveFactor = (crestDecay - crestDist) * dotPositionFactor;
+
+
+      const moveFactor = easing.easeInOutQuad((crestDecay - crestDist) / crestDecay) * crestDecay * dotPositionFactor;
+      // const moveFactor = (crestDecay - crestDist) * dotPositionFactor;
 
       toReturn.x -= moveFactor * Math.cos(angle);
       toReturn.y -= moveFactor * Math.sin(angle);
