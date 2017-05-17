@@ -50,53 +50,43 @@ function onPointerUp(evt) {
   waves.push(new Wave(coords.x, coords.y,
       Math.sqrt(maxX * maxX + maxY * maxY) + crestDecay,
       canvasDiagonal + crestDecay, 12 * DEVICE_PIXEL_RATIO, easing.easeOutQuad));
-}
 
-// Interpolate a value between min/max.
-function getDotSize(dotX, dotY) {
-  let dotSize = 2;
-
-  for (let wave of waves) {
-    const crestDist = wave.distanceFromCrest(dotX, dotY);
-
-    if (crestDist <= crestDecay) {
-      dotSize += dotSizeFactor * easing.easeInCubic(1 - crestDist / crestDecay);
-    }
+  for (let p of grid.points) {
+    p.distFromWaves.push(null);
+    p.angleFromWaves.push(null);
   }
-
-  return dotSize * DEVICE_PIXEL_RATIO;
-}
-
-function getDotOffsetPosition(dotX, dotY) {
-  let toReturn = {x: dotX,  y: dotY};
-
-  for (let wave of waves) {
-    const crestDist = wave.distanceFromCrest(dotX, dotY);
-
-    if (crestDist <= crestDecay) {
-      const angle = utils.getAngleBetweenPoints(dotX, dotY, wave.x, wave.y);
-
-
-      const moveFactor = easing.easeInOutQuad((crestDecay - crestDist) / crestDecay) * crestDecay * dotPositionFactor;
-      // const moveFactor = (crestDecay - crestDist) * dotPositionFactor;
-
-      toReturn.x -= moveFactor * Math.cos(angle);
-      toReturn.y -= moveFactor * Math.sin(angle);
-    }
-  }
-
-  return toReturn;
 }
 
 // Draw a grid of dots.
 function drawGrid() {
   for (let p of grid.points) {
-    const dotPosition = getDotOffsetPosition(p.x, p.y);
+    let dotPosition = {x: p.x,  y: p.y};
+    let dotSize = 2;
 
-    const size = getDotSize(dotPosition.x, dotPosition.y);
+    for (let [index, wave] of waves.entries()) {
 
-    ctx.fillRect(dotPosition.x - size / 2, dotPosition.y - size / 2,
-        size, size);
+      if (!p.distFromWaves[index]) {
+        p.distFromWaves[index] = utils.getDistance2d(p.x, p.y, wave.x, wave.y);
+      }
+      const crestDist = Math.abs(p.distFromWaves[index] -
+          wave.getEasedCrestValue());
+
+      if (crestDist <= crestDecay) {
+        const angle = utils.getAngleBetweenPoints(p.x, p.y, wave.x, wave.y);
+        const moveFactor = easing.easeInOutQuad((crestDecay - crestDist) / crestDecay) * crestDecay * dotPositionFactor;
+        // const moveFactor = (crestDecay - crestDist) * dotPositionFactor;
+
+        dotPosition.x -= moveFactor * Math.cos(angle);
+        dotPosition.y -= moveFactor * Math.sin(angle);
+
+        dotSize += dotSizeFactor * easing.easeInCubic(1 - crestDist / crestDecay);
+      }
+    }
+
+    dotSize *= DEVICE_PIXEL_RATIO;
+
+    ctx.fillRect(dotPosition.x - dotSize / 2, dotPosition.y - dotSize / 2,
+        dotSize, dotSize);
   }
 }
 
@@ -122,7 +112,13 @@ function draw(ts) {
     // fillCircle(wave.x, wave.y, crestR);
 
     wave.grow();
-    if (wave.isExpired()) waves.splice(index, 1);
+    if (wave.isExpired()) {
+      waves.splice(index, 1);
+      for (let p of grid.points) {
+        p.distFromWaves.splice(index, 1);
+        p.angleFromWaves.splice(index, 1);
+      }
+    }
   }
 }
 

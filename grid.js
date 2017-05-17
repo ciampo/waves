@@ -23,7 +23,9 @@ export default class Grid {
       for (let r of [...Array(rows + 1).keys()]) {
         this.points.push({
           x: c * this.gap + offsetX,
-          y: r * this.gap + offsetY
+          y: r * this.gap + offsetY,
+          distFromWaves: [],
+          angleFromWaves: []
         });
       }
     }
