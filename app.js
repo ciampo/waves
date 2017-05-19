@@ -3,41 +3,37 @@ import * as utils from './utils.js';
 import Wave from './wave.js';
 import Grid from './grid.js';
 
-const DEVICE_PIXEL_RATIO = window.devicePixelRatio;
+// Constants
+// it may as well be always 1 as everything is squar-y
+const DEVICE_PIXEL_RATIO = 1;
+const GRID_GAP = 40 * DEVICE_PIXEL_RATIO;
+const GRID_DOT_SIZE = 3 * DEVICE_PIXEL_RATIO;
+const WAVE_CREST_VELOCITY = 12 * DEVICE_PIXEL_RATIO;
+const WAVE_CREST_DECAY = 400 * DEVICE_PIXEL_RATIO;
+const WAVE_PULSE_MAX_OPACITY = 0.05;
+const COLOR_FG = {
+  dark: [255, 255, 255],
+  light: [40, 40, 40]
+};
 
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
-
-const gridGap = 30 * DEVICE_PIXEL_RATIO;
-const gridDotSize = 2;
-const radius = 200 * DEVICE_PIXEL_RATIO;
-const crestDecay = 400 * DEVICE_PIXEL_RATIO;
-const crestVelocity = 12 * DEVICE_PIXEL_RATIO;
-const dotSizeFactor = 3;
-const dotPositionFactor = 1 / 20;
-const dotsOffet = 100;
+// Variables
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const colorMode = document.body.classList.contains('dark-mode') ?
+    'dark' : 'light';
+console.log(colorMode);
 
 let grid;
 let waves = [];
 let canvasDiagonal;
 
 // Compute vars.
-function update() {
+function onResize() {
   canvas.setAttribute('width', `${window.innerWidth * DEVICE_PIXEL_RATIO}px`);
   canvas.setAttribute('height', `${window.innerHeight * DEVICE_PIXEL_RATIO}px`);
 
+  grid.init(canvas.width, canvas.height, waves.length);
   canvasDiagonal = utils.getDistance2d(0, 0, canvas.width, canvas.height);
-
-  ctx.fillStyle = '#ffffff';
-
-  // Update grid points.
-  if (!grid) {
-    grid = new Grid(canvas.width, canvas.height, gridGap, gridDotSize);
-  } else {
-    grid.width = canvas.width;
-    grid.height = canvas.height;
-  }
-  grid.update();
 }
 
 
@@ -48,46 +44,11 @@ function onPointerUp(evt) {
   const maxY = utils.absMax(coords.y, coords.y - canvas.height);
 
   waves.push(new Wave(coords.x, coords.y,
-      Math.sqrt(maxX * maxX + maxY * maxY) + crestDecay,
-      canvasDiagonal + crestDecay, 12 * DEVICE_PIXEL_RATIO, easing.easeOutQuad));
+      Math.sqrt(maxX * maxX + maxY * maxY) + WAVE_CREST_DECAY,
+      canvasDiagonal + WAVE_CREST_DECAY, WAVE_CREST_VELOCITY, WAVE_CREST_DECAY,
+      easing.easeOutQuad));
 
-  for (let p of grid.points) {
-    p.distFromWaves.push(null);
-    p.angleFromWaves.push(null);
-  }
-}
-
-// Draw a grid of dots.
-function drawGrid() {
-  for (let p of grid.points) {
-    let dotPosition = {x: p.x,  y: p.y};
-    let dotSize = 2;
-
-    for (let [index, wave] of waves.entries()) {
-
-      if (!p.distFromWaves[index]) {
-        p.distFromWaves[index] = utils.getDistance2d(p.x, p.y, wave.x, wave.y);
-      }
-      const crestDist = Math.abs(p.distFromWaves[index] -
-          wave.getEasedCrestValue());
-
-      if (crestDist <= crestDecay) {
-        const angle = utils.getAngleBetweenPoints(p.x, p.y, wave.x, wave.y);
-        const moveFactor = easing.easeInOutQuad((crestDecay - crestDist) / crestDecay) * crestDecay * dotPositionFactor;
-        // const moveFactor = (crestDecay - crestDist) * dotPositionFactor;
-
-        dotPosition.x -= moveFactor * Math.cos(angle);
-        dotPosition.y -= moveFactor * Math.sin(angle);
-
-        dotSize += dotSizeFactor * easing.easeInCubic(1 - crestDist / crestDecay);
-      }
-    }
-
-    dotSize *= DEVICE_PIXEL_RATIO;
-
-    ctx.fillRect(dotPosition.x - dotSize / 2, dotPosition.y - dotSize / 2,
-        dotSize, dotSize);
-  }
+  grid.addWave();
 }
 
 function fillCircle(x, y, r) {
@@ -103,33 +64,44 @@ function draw(ts) {
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  drawGrid();
+  // Draw the grid.
+  ctx.fillStyle = `rgba(${COLOR_FG[colorMode][0]},
+                        ${COLOR_FG[colorMode][1]},
+                        ${COLOR_FG[colorMode][2]}, 1)`;
+  grid.update(waves);
+  grid.points.forEach(p => ctx.fillRect(p.displayX, p.displayY, p.size, p.size));
 
-  // Update waves.
   for (let [index, wave] of waves.entries()) {
-    // Draw
-    // const crestR = wave.getEasedCrestValue();
-    // fillCircle(wave.x, wave.y, crestR);
+    // Draw wave pulse.
+    const crestR = wave.getEasedCrestValue();
+    if (crestR <= wave.easingRadius / 2) {
+      const opacity = WAVE_PULSE_MAX_OPACITY *
+          easing.easeInQuart(1 - crestR / (wave.easingRadius / 2));
+      ctx.fillStyle = `rgba(${COLOR_FG[colorMode][0]},
+                            ${COLOR_FG[colorMode][1]},
+                            ${COLOR_FG[colorMode][2]},
+                            ${opacity})`;
+      fillCircle(wave.x, wave.y, wave.getEasedCrestValue());
+    }
 
+    // Grow wave / remove if expired.
     wave.grow();
     if (wave.isExpired()) {
       waves.splice(index, 1);
-      for (let p of grid.points) {
-        p.distFromWaves.splice(index, 1);
-        p.angleFromWaves.splice(index, 1);
-      }
+      grid.removeWave(index);
     }
   }
 }
 
 // Draw entry point
 function start() {
-  update();
+  grid = new Grid(canvas.width, canvas.height, GRID_GAP, GRID_DOT_SIZE);
+  onResize();
   requestAnimationFrame(draw);
 }
 
 // Event listeners
-window.addEventListener('resize', update, false);
+window.addEventListener('resize', onResize, false);
 canvas.addEventListener('pointerup', onPointerUp, false);
 
 // Start sketch
