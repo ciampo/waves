@@ -71,7 +71,7 @@ function draw(ts) {
   grid.update(waves);
   grid.points.forEach(p => ctx.fillRect(p.displayX, p.displayY, p.size, p.size));
 
-  for (let [index, wave] of waves.entries()) {
+  for (const [index, wave] of waves.entries()) {
     // Draw wave pulse.
     const crestR = wave.getEasedCrestValue();
     if (crestR <= wave.easingRadius / 2) {

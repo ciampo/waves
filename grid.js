@@ -14,6 +14,7 @@ export default class Grid {
     this._sizeConst = 3.5;
 
     this._distFromWaves = [];
+    this._angleFromWaves = [];
     this.points = [];
   }
 
@@ -23,6 +24,7 @@ export default class Grid {
 
     this.points = [];
     this._distFromWaves = [];
+    this._angleFromWaves = [];
 
     const cols = Math.floor(this.width / this.gap);
     const rows = Math.floor(this.height / this.gap);
@@ -30,8 +32,8 @@ export default class Grid {
     const offsetX = Math.floor((this.width - cols * this.gap) / 2);
     const offsetY = Math.floor((this.height - rows * this.gap) / 2);
 
-    for (let c of [...Array(cols + 1).keys()]) {
-      for (let r of [...Array(rows + 1).keys()]) {
+    for (const c of [...Array(cols + 1).keys()]) {
+      for (const r of [...Array(rows + 1).keys()]) {
         this.points.push({
           x: c * this.gap + offsetX,
           y: r * this.gap + offsetY,
@@ -41,28 +43,25 @@ export default class Grid {
         });
 
         this._distFromWaves.push(Array(nWaves).fill(null));
+        this._angleFromWaves.push(Array(nWaves).fill(null));
       }
     }
   }
 
   update(waves) {
-    for (let [pIndex, p] of this.points.entries()) {
+    for (const [pIndex, p] of this.points.entries()) {
 
       p.displayX = p.x;
       p.displayY = p.y;
       p.size = this.baseDotSize;
 
-      for (let [wIndex, wave] of waves.entries()) {
-
-        if (!this._distFromWaves[pIndex][wIndex]) {
-          this._distFromWaves[pIndex][wIndex] =
-              utils.getDistance2d(p.x, p.y, wave.x, wave.y);
-        }
-        const distFromCrest = Math.abs(this._distFromWaves[pIndex][wIndex] -
+      for (const [wIndex, wave] of waves.entries()) {
+        const distFromCrest = Math.abs(
+            this._getDistFromWave(pIndex, p, wIndex, wave) -
             wave.getEasedCrestValue());
 
         if (distFromCrest <= wave.crestAOE) {
-          const angle = utils.getAngleBetweenPoints(p.x, p.y, wave.x, wave.y);
+          const angle = this._getAngleFromWave(pIndex, p, wIndex, wave);
           const percDist = (wave.crestAOE - distFromCrest) / wave.crestAOE;
           const easedPercDist = easing.easeInOutQuad(percDist) * wave.crestAOE;
 
@@ -78,11 +77,29 @@ export default class Grid {
     }
   }
 
+  _getDistFromWave(pIndex, p, wIndex, wave) {
+    if (this._distFromWaves[pIndex][wIndex] === null) {
+      this._distFromWaves[pIndex][wIndex] =
+          utils.getDistance2d(p.x, p.y, wave.x, wave.y);
+    }
+    return this._distFromWaves[pIndex][wIndex];
+  }
+
+  _getAngleFromWave(pIndex, p, wIndex, wave) {
+    if (this._angleFromWaves[pIndex][wIndex] === null) {
+      this._angleFromWaves[pIndex][wIndex] =
+          utils.getAngleBetweenPoints(p.x, p.y, wave.x, wave.y);
+    }
+    return this._angleFromWaves[pIndex][wIndex];
+  }
+
   addWave() {
     this._distFromWaves.forEach(d => {d.push(null);})
+    this._angleFromWaves.forEach(d => {d.push(null);})
   }
 
   removeWave(index) {
     this._distFromWaves.forEach(d => {d.splice(index, 1);})
+    this._angleFromWaves.forEach(d => {d.splice(index, 1);})
   }
 }
