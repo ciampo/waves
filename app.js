@@ -17,59 +17,83 @@ const COLOR_FG = {
 };
 
 // Variables
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
 const colorMode = document.body.classList.contains('dark-mode') ?
     'dark' : 'light';
-console.log(colorMode);
 
 let grid;
 let waves = [];
-let canvasDiagonal;
+let svg = document.getElementById('svg');
+let sketchW, sketchH;
+let sketchDiagonal;
+let dots = [];
 
 // Compute vars.
 function onResize() {
-  canvas.setAttribute('width', `${window.innerWidth * DEVICE_PIXEL_RATIO}px`);
-  canvas.setAttribute('height', `${window.innerHeight * DEVICE_PIXEL_RATIO}px`);
+  sketchW = window.innerWidth * DEVICE_PIXEL_RATIO;
+  sketchH = window.innerHeight * DEVICE_PIXEL_RATIO;
+  dots = [];
 
-  grid.init(canvas.width, canvas.height, waves.length);
-  canvasDiagonal = utils.getDistance2d(0, 0, canvas.width, canvas.height);
+  grid.init(sketchW, sketchH, waves.length);
+  sketchDiagonal = utils.getDistance2d(0, 0, sketchW, sketchH);
+
+  while (svg.firstChild) {
+    svg.removeChild(svg.firstChild);
+  }
+  for (const p of grid.points) {
+    const r = createRect(p.x, p.y, GRID_DOT_SIZE);
+    svg.appendChild(r);
+    dots.push(r);
+  }
 }
 
 
 function onPointerUp(evt) {
-  const coords = utils.getMouseCoordinates(evt,
-      utils.createCanvasFullScreenBCR(canvas), DEVICE_PIXEL_RATIO);
-  const maxX = utils.absMax(coords.x, coords.x - canvas.width);
-  const maxY = utils.absMax(coords.y, coords.y - canvas.height);
+  const maxX = utils.absMax(evt.clientX, evt.clientX - sketchW);
+  const maxY = utils.absMax(evt.clientY, evt.clientY - sketchH);
 
-  waves.push(new Wave(coords.x, coords.y,
+  waves.push(new Wave(evt.clientX, evt.clientY,
       Math.sqrt(maxX * maxX + maxY * maxY) + WAVE_CREST_DECAY,
-      canvasDiagonal + WAVE_CREST_DECAY, WAVE_CREST_VELOCITY, WAVE_CREST_DECAY,
+      sketchDiagonal + WAVE_CREST_DECAY, WAVE_CREST_VELOCITY, WAVE_CREST_DECAY,
       easing.easeOutQuad));
 
   grid.addWave();
 }
 
+function createRect(x, y, size) {
+  const rect = document.createElementNS("http://www.w3.org/2000/svg", 'rect');
+  rect.setAttributeNS(null, 'x', 0);
+  rect.setAttributeNS(null, 'y', 0);
+  rect.setAttributeNS(null, 'width', size);
+  rect.setAttributeNS(null, 'height', size);
+  rect.setAttribute('transform', `translate(${x}, ${y})`);
+  rect.style.willChange = 'transform';
+  return rect;
+}
+
 function fillCircle(x, y, r) {
-  ctx.beginPath();
-  ctx.arc(x, y, r, 0, Math.PI * 2, true);
-  ctx.closePath();
-  ctx.fill();
+  // ctx.beginPath();
+  // ctx.arc(x, y, r, 0, Math.PI * 2, true);
+  // ctx.closePath();
+  // ctx.fill();
 }
 
 // Draw entry point (rendering loop).
 function draw(ts) {
   requestAnimationFrame(draw);
 
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   // Draw the grid.
-  ctx.fillStyle = `rgba(${COLOR_FG[colorMode][0]},
-                        ${COLOR_FG[colorMode][1]},
-                        ${COLOR_FG[colorMode][2]}, 1)`;
+  // ctx.fillStyle = `rgba(${COLOR_FG[colorMode][0]},
+  //                       ${COLOR_FG[colorMode][1]},
+  //                       ${COLOR_FG[colorMode][2]}, 1)`;
   grid.update(waves);
-  grid.points.forEach(p => ctx.fillRect(p.displayX, p.displayY, p.size, p.size));
+  grid.points.forEach((p, i) => {
+    dots[i].setAttribute('transform',
+        `translate(${p.translateX}, ${p.translateY}) scale(${p.scale})`);
+  });
+
+  // console.log('transform',
+  //       `translateX(${grid.points[0].translateX})`);
 
   for (let [index, wave] of waves.entries()) {
     // Draw wave pulse.
@@ -77,10 +101,10 @@ function draw(ts) {
     if (crestR <= wave.easingRadius / 2) {
       const opacity = WAVE_PULSE_MAX_OPACITY *
           easing.easeInQuart(1 - crestR / (wave.easingRadius / 2));
-      ctx.fillStyle = `rgba(${COLOR_FG[colorMode][0]},
-                            ${COLOR_FG[colorMode][1]},
-                            ${COLOR_FG[colorMode][2]},
-                            ${opacity})`;
+      // ctx.fillStyle = `rgba(${COLOR_FG[colorMode][0]},
+      //                       ${COLOR_FG[colorMode][1]},
+      //                       ${COLOR_FG[colorMode][2]},
+      //                       ${opacity})`;
       fillCircle(wave.x, wave.y, wave.getEasedCrestValue());
     }
 
@@ -95,14 +119,14 @@ function draw(ts) {
 
 // Draw entry point
 function start() {
-  grid = new Grid(canvas.width, canvas.height, GRID_GAP, GRID_DOT_SIZE);
+  grid = new Grid(sketchW, sketchH, GRID_GAP, GRID_DOT_SIZE);
   onResize();
   requestAnimationFrame(draw);
 }
 
 // Event listeners
 window.addEventListener('resize', onResize, false);
-canvas.addEventListener('pointerup', onPointerUp, false);
+window.addEventListener('pointerup', onPointerUp, false);
 
 // Start sketch
 start();

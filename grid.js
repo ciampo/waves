@@ -35,9 +35,9 @@ export default class Grid {
         this.points.push({
           x: c * this.gap + offsetX,
           y: r * this.gap + offsetY,
-          displayX: null,
-          displayY: null,
-          size: null
+          translateX: null,
+          translateY: null,
+          scale: null
         });
 
         this._distFromWaves.push(Array(nWaves).fill(null));
@@ -48,9 +48,9 @@ export default class Grid {
   update(waves) {
     for (let [pIndex, p] of this.points.entries()) {
 
-      p.displayX = p.x;
-      p.displayY = p.y;
-      p.size = this.baseDotSize;
+      p.translateX = p.x;
+      p.translateY = p.y;
+      p.scale = 1;
 
       for (let [wIndex, wave] of waves.entries()) {
 
@@ -66,15 +66,12 @@ export default class Grid {
           const percDist = (wave.crestAOE - distFromCrest) / wave.crestAOE;
           const easedPercDist = easing.easeInOutQuad(percDist) * wave.crestAOE;
 
-          p.displayX -= easedPercDist * this._posConst * Math.cos(angle);
-          p.displayY -= easedPercDist * this._posConst * Math.sin(angle);
+          p.translateX -= easedPercDist * this._posConst * Math.cos(angle);
+          p.translateY -= easedPercDist * this._posConst * Math.sin(angle);
 
-          p.size += this._sizeConst * easing.easeInCubic(1 - distFromCrest / wave.crestAOE);
+          p.scale += this._sizeConst * easing.easeInCubic(1 - distFromCrest / wave.crestAOE);
         }
       }
-
-      p.displayX -= p.size / 2;
-      p.displayY -= p.size / 2;
     }
   }
 

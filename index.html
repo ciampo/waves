@@ -8,24 +8,30 @@
   <style>
     body {
       background-color: #f0f0f0;
+      margin: 0;
+      padding: 0;
     }
 
     body.dark-mode {
       background-color: #1a1a1a;
     }
 
-    #canvas {
-      position: absolute;
-      top: 0;
-      left: 0;
+    svg {
+      fill: #1a1a1a;
 
-      width: 100%;
-      height: 100%;
+      width: 100vw;
+      height: 100vh;
     }
+
+    body.dark-mode svg {
+      fill: #f0f0f0;
+    }
+
   </style>
 </head>
 <body>
-  <canvas id="canvas"></canvas>
+  <svg id="svg" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+  </svg>
 
   <script src="https://code.jquery.com/pep/0.4.3/pep.js"></script>
   <script type="module" src="./app.js"></script>
