@@ -216,6 +216,7 @@ class Grid {
     this._sizeConst = 3.5;
 
     this._distFromWaves = [];
+    this._angleFromWaves = [];
     this.points = [];
   }
 
@@ -225,6 +226,7 @@ class Grid {
 
     this.points = [];
     this._distFromWaves = [];
+    this._angleFromWaves = [];
 
     const cols = Math.floor(this.width / this.gap);
     const rows = Math.floor(this.height / this.gap);
@@ -232,8 +234,8 @@ class Grid {
     const offsetX = Math.floor((this.width - cols * this.gap) / 2);
     const offsetY = Math.floor((this.height - rows * this.gap) / 2);
 
-    for (let c of [...Array(cols + 1).keys()]) {
-      for (let r of [...Array(rows + 1).keys()]) {
+    for (const c of [...Array(cols + 1).keys()]) {
+      for (const r of [...Array(rows + 1).keys()]) {
         this.points.push({
           x: c * this.gap + offsetX,
           y: r * this.gap + offsetY,
@@ -243,28 +245,25 @@ class Grid {
         });
 
         this._distFromWaves.push(Array(nWaves).fill(null));
+        this._angleFromWaves.push(Array(nWaves).fill(null));
       }
     }
   }
 
   update(waves) {
-    for (let [pIndex, p] of this.points.entries()) {
+    for (const [pIndex, p] of this.points.entries()) {
 
       p.displayX = p.x;
       p.displayY = p.y;
       p.size = this.baseDotSize;
 
-      for (let [wIndex, wave] of waves.entries()) {
-
-        if (!this._distFromWaves[pIndex][wIndex]) {
-          this._distFromWaves[pIndex][wIndex] =
-              __WEBPACK_IMPORTED_MODULE_0__utils_js__["a" /* getDistance2d */](p.x, p.y, wave.x, wave.y);
-        }
-        const distFromCrest = Math.abs(this._distFromWaves[pIndex][wIndex] -
+      for (const [wIndex, wave] of waves.entries()) {
+        const distFromCrest = Math.abs(
+            this._getDistFromWave(pIndex, p, wIndex, wave) -
             wave.getEasedCrestValue());
 
         if (distFromCrest <= wave.crestAOE) {
-          const angle = __WEBPACK_IMPORTED_MODULE_0__utils_js__["e" /* getAngleBetweenPoints */](p.x, p.y, wave.x, wave.y);
+          const angle = this._getAngleFromWave(pIndex, p, wIndex, wave);
           const percDist = (wave.crestAOE - distFromCrest) / wave.crestAOE;
           const easedPercDist = __WEBPACK_IMPORTED_MODULE_1__easing_js__["c" /* easeInOutQuad */](percDist) * wave.crestAOE;
 
@@ -280,12 +279,30 @@ class Grid {
     }
   }
 
+  _getDistFromWave(pIndex, p, wIndex, wave) {
+    if (this._distFromWaves[pIndex][wIndex] === null) {
+      this._distFromWaves[pIndex][wIndex] =
+          __WEBPACK_IMPORTED_MODULE_0__utils_js__["a" /* getDistance2d */](p.x, p.y, wave.x, wave.y);
+    }
+    return this._distFromWaves[pIndex][wIndex];
+  }
+
+  _getAngleFromWave(pIndex, p, wIndex, wave) {
+    if (this._angleFromWaves[pIndex][wIndex] === null) {
+      this._angleFromWaves[pIndex][wIndex] =
+          __WEBPACK_IMPORTED_MODULE_0__utils_js__["e" /* getAngleBetweenPoints */](p.x, p.y, wave.x, wave.y);
+    }
+    return this._angleFromWaves[pIndex][wIndex];
+  }
+
   addWave() {
     this._distFromWaves.forEach(d => {d.push(null);})
+    this._angleFromWaves.forEach(d => {d.push(null);})
   }
 
   removeWave(index) {
     this._distFromWaves.forEach(d => {d.splice(index, 1);})
+    this._angleFromWaves.forEach(d => {d.splice(index, 1);})
   }
 }
 /* harmony export (immutable) */ __webpack_exports__["a"] = Grid;
@@ -342,20 +359,6 @@ class Wave {
    */
   isExpired() {
     return this.crestRadius >= this.maxRadius;
-  }
-
-  /**
-   * Returns the distance of a point from the crest of this wave
-   *
-   * @param {number} dotX
-   * @param {number} dotY
-   * @returns {number}
-   *
-   * @memberof Wave
-   */
-  distanceFromCrest(dotX, dotY) {
-    return Math.abs(__WEBPACK_IMPORTED_MODULE_0__utils_js__["a" /* getDistance2d */](dotX, dotY, this.x, this.y) -
-        this.getEasedCrestValue());
   }
 
   /**
@@ -456,7 +459,7 @@ function draw(ts) {
   grid.update(waves);
   grid.points.forEach(p => ctx.fillRect(p.displayX, p.displayY, p.size, p.size));
 
-  for (let [index, wave] of waves.entries()) {
+  for (const [index, wave] of waves.entries()) {
     // Draw wave pulse.
     const crestR = wave.getEasedCrestValue();
     if (crestR <= wave.easingRadius / 2) {
