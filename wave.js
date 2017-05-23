@@ -45,20 +45,6 @@ export default class Wave {
   }
 
   /**
-   * Returns the distance of a point from the crest of this wave
-   *
-   * @param {number} dotX
-   * @param {number} dotY
-   * @returns {number}
-   *
-   * @memberof Wave
-   */
-  distanceFromCrest(dotX, dotY) {
-    return Math.abs(utils.getDistance2d(dotX, dotY, this.x, this.y) -
-        this.getEasedCrestValue());
-  }
-
-  /**
    * Gets eased value, instead of linear increasing value.
    *
    * @returns {number}
