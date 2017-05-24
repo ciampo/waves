@@ -29,6 +29,9 @@ export function createCanvasFullScreenBCR(canvas) {
 };
 
 export function getAngleBetweenPoints(x1, y1, x2, y2) {
-  // console.log(arguments, (y2 - y1), (x2 - x1));
-  return Math.atan2(y2- y1, x2 - x1);
+  return Math.atan2(y2 - y1, x2 - x1);
+}
+
+export function bitwiseRound(n) {
+  return (0.5 + n) << 0;
 }

@@ -14,7 +14,7 @@ export default class CanvasRenderer {
     rootNode.appendChild(this._canvas);
 
     // Device pixel ratio.
-    this._DPR = 1;
+    this._DPR = 1;// window.devicePixelRatio;
 
     this.diagonal = 0;
 
