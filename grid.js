@@ -2,9 +2,7 @@ import * as utils from './utils.js';
 import * as easing from './easing.js';
 
 export default class Grid {
-  constructor(w, h, gap, baseDotSize) {
-    this.width = w;
-    this.height = h;
+  constructor(gap, baseDotSize) {
     this.gap = gap;
     this.baseDotSize = baseDotSize;
 
@@ -15,28 +13,26 @@ export default class Grid {
 
     this._distFromWaves = [];
     this._angleFromWaves = [];
+
+    this._cols;
+    this._rows;
+
     this.points = [];
   }
 
-  init(w, h, nWaves) {
-    this.width = w;
-    this.height = h;
-
+  resize(w, h, nWaves) {
     this.points = [];
     this._distFromWaves = [];
     this._angleFromWaves = [];
 
-    const cols = Math.floor(this.width / this.gap);
-    const rows = Math.floor(this.height / this.gap);
+    this._cols = Math.floor(w / this.gap);
+    this._rows = Math.floor(h / this.gap);
 
-    const offsetX = Math.floor((this.width - cols * this.gap) / 2);
-    const offsetY = Math.floor((this.height - rows * this.gap) / 2);
-
-    for (const c of [...Array(cols + 1).keys()]) {
-      for (const r of [...Array(rows + 1).keys()]) {
+    for (const c of [...Array(this._cols + 1).keys()]) {
+      for (const r of [...Array(this._rows + 1).keys()]) {
         this.points.push({
-          x: c * this.gap + offsetX,
-          y: r * this.gap + offsetY,
+          x: c * this.gap + Math.floor((w - this._cols * this.gap) / 2),
+          y: r * this.gap + Math.floor((h - this._rows * this.gap) / 2),
           displayX: null,
           displayY: null,
           size: null
@@ -49,32 +45,33 @@ export default class Grid {
   }
 
   update(waves) {
-    for (const [pIndex, p] of this.points.entries()) {
+    let distFromCrest, angle, percDist, easedPercDist;
 
+    this.points.forEach((p, pIndex) => {
       p.displayX = p.x;
       p.displayY = p.y;
       p.size = this.baseDotSize;
 
-      for (const [wIndex, wave] of waves.entries()) {
-        const distFromCrest = Math.abs(
+      waves.forEach((wave, wIndex) => {
+        distFromCrest = Math.abs(
             this._getDistFromWave(pIndex, p, wIndex, wave) -
             wave.getEasedCrestValue());
 
         if (distFromCrest <= wave.crestAOE) {
-          const angle = this._getAngleFromWave(pIndex, p, wIndex, wave);
-          const percDist = (wave.crestAOE - distFromCrest) / wave.crestAOE;
-          const easedPercDist = easing.easeInOutQuad(percDist) * wave.crestAOE;
+          angle = this._getAngleFromWave(pIndex, p, wIndex, wave);
+          percDist = (wave.crestAOE - distFromCrest) / wave.crestAOE;
+          easedPercDist = easing.easeInOutQuad(percDist) * wave.crestAOE;
 
           p.displayX -= easedPercDist * this._posConst * Math.cos(angle);
           p.displayY -= easedPercDist * this._posConst * Math.sin(angle);
 
           p.size += this._sizeConst * easing.easeInCubic(1 - distFromCrest / wave.crestAOE);
         }
-      }
+      });
 
       p.displayX -= p.size / 2;
       p.displayY -= p.size / 2;
-    }
+    });
   }
 
   _getDistFromWave(pIndex, p, wIndex, wave) {
