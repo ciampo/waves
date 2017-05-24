@@ -37,9 +37,19 @@ export default class CanvasRenderer {
                                 ${this.colors[this.colorMode].g},
                                 ${this.colors[this.colorMode].b}, 1)`;
 
+    this._ctx.beginPath();
     points.forEach(p => {
-      this._ctx.fillRect(p.displayX, p.displayY, p.size, p.size);
+      this._ctx.moveTo(p.displayX * this._DPR, p.displayY * this._DPR);
+      this._ctx.lineTo(utils.bitwiseRound((p.displayX + p.size) * this._DPR),
+          utils.bitwiseRound(p.displayY * this._DPR));
+      this._ctx.lineTo(utils.bitwiseRound((p.displayX + p.size) * this._DPR),
+          utils.bitwiseRound((p.displayY + p.size) * this._DPR));
+      this._ctx.lineTo(utils.bitwiseRound(p.displayX  * this._DPR),
+          utils.bitwiseRound((p.displayY + p.size) * this._DPR));
+      this._ctx.lineTo(utils.bitwiseRound(p.displayX * this._DPR),
+          utils.bitwiseRound(p.displayY * this._DPR));
     });
+    this._ctx.fill();
 
     waves.forEach(wave => {
       // Draw wave pulse. Opacity gets lower as the wave grows.
@@ -53,7 +63,7 @@ export default class CanvasRenderer {
                     easing.easeInQuart(1 - crestR / (wave.easingRadius / 2))})`;
 
         this._ctx.beginPath();
-        this._ctx.arc(wave.x, wave.y, crestR, 0, Math.PI * 2, true);
+        this._ctx.arc(wave.x * this._DPR, wave.y * this._DPR, crestR * this._DPR, 0, Math.PI * 2, true);
         this._ctx.closePath();
         this._ctx.fill();
       }
