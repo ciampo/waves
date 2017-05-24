@@ -21,7 +21,6 @@ const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 const colorMode = document.body.classList.contains('dark-mode') ?
     'dark' : 'light';
-console.log(colorMode);
 
 let grid;
 let waves = [];
