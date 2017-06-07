@@ -10,7 +10,7 @@ export function getMouseCoordinates(evt, canvasBCR, devicePxRatio = 1) {
 };
 
 export function getDistance2d(x1, y1, x2, y2) {
-  return Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
+  return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
 };
 
 export function absMax(x, y) {

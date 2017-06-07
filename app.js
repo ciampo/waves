@@ -8,7 +8,7 @@ import SvgRenderer from './svg-renderer.js';
 // Constants
 // it may as well be always 1 as everything is squar-y
 const GRID_GAP = 40;
-const GRID_DOT_SIZE = 3;
+const GRID_DOT_SIZE = 2;
 const WAVE_CREST_VELOCITY = 12;
 const WAVE_CREST_DECAY = 400;
 const COLOR_MODE_DARK = 'dark';
