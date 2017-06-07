@@ -16,6 +16,8 @@ export default class SvgRenderer {
     this._svg.setAttributeNS(null, 'preserveAspectRatio', 'none');
     this._rootNode.appendChild(this._svg);
 
+    this._initialDotSize;
+
     this._currentColor;
     this.currentColor = color;
   }
@@ -60,8 +62,11 @@ export default class SvgRenderer {
     }
 
     points.forEach((p, i) => {
+      if (!this._initialDotSize) {
+        this._initialDotSize = p.size;
+      }
       this._dots[i].setAttribute('transform',
-          `translate(${p.displayX}, ${p.displayY}) scale(${p.size / 3})`);
+          `translate(${p.displayX}, ${p.displayY}) scale(${p.size / this._initialDotSize})`);
     });
 
     // waves.forEach(wave => {
