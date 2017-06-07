@@ -31,6 +31,10 @@ let renderer = new CanvasRenderer(root, COLORS[currentColorPalette]);
 const grid = new Grid(GRID_GAP, GRID_DOT_SIZE);
 const sketchSize = {w: 0, h: 0};
 
+let options = {
+  renderer: 'svg'
+};
+
 let waves = [];
 
 let maxX, maxY;
@@ -83,6 +87,22 @@ function draw(ts) {
 
 // Draw entry point
 function start() {
+  const gui = new dat.GUI();
+  var controller = gui.add(options, 'renderer', ['canvas', 'svg']);
+
+  controller.onFinishChange(function(value) {
+    switch(value) {
+      case 'svg':
+        renderer = new SvgRenderer(root, COLORS[currentColorPalette]);
+        onResize();
+        break;
+      case 'canvas':
+        renderer = new CanvasRenderer(root, COLORS[currentColorPalette]);
+        onResize();
+        break;
+    }
+  });
+
   onResize();
   requestAnimationFrame(draw);
 }
