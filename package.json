@@ -17,7 +17,5 @@
     "start": "./node_modules/.bin/webpack-dev-server",
     "build": "./node_modules/.bin/webpack"
   },
-  "dependencies": {
-    "dat.gui": "^0.6.1"
-  }
+  "dependencies": {}
 }
