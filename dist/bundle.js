@@ -63,7 +63,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 4);
+/******/ 	return __webpack_require__(__webpack_require__.s = 6);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -71,11 +71,12 @@
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony export (immutable) */ __webpack_exports__["b"] = getMouseCoordinates;
-/* harmony export (immutable) */ __webpack_exports__["a"] = getDistance2d;
-/* harmony export (immutable) */ __webpack_exports__["d"] = absMax;
-/* harmony export (immutable) */ __webpack_exports__["c"] = createCanvasFullScreenBCR;
-/* harmony export (immutable) */ __webpack_exports__["e"] = getAngleBetweenPoints;
+/* unused harmony export getMouseCoordinates */
+/* harmony export (immutable) */ __webpack_exports__["b"] = getDistance2d;
+/* harmony export (immutable) */ __webpack_exports__["a"] = absMax;
+/* unused harmony export createCanvasFullScreenBCR */
+/* harmony export (immutable) */ __webpack_exports__["c"] = getAngleBetweenPoints;
+/* harmony export (immutable) */ __webpack_exports__["d"] = bitwiseRound;
 function getMouseCoordinates(evt, canvasBCR, devicePxRatio = 1) {
   let toReturn = {};
 
@@ -88,7 +89,7 @@ function getMouseCoordinates(evt, canvasBCR, devicePxRatio = 1) {
 };
 
 function getDistance2d(x1, y1, x2, y2) {
-  return Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
+  return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
 };
 
 function absMax(x, y) {
@@ -107,8 +108,11 @@ function createCanvasFullScreenBCR(canvas) {
 };
 
 function getAngleBetweenPoints(x1, y1, x2, y2) {
-  // console.log(arguments, (y2 - y1), (x2 - x1));
-  return Math.atan2(y2- y1, x2 - x1);
+  return Math.atan2(y2 - y1, x2 - x1);
+}
+
+function bitwiseRound(n) {
+  return (0.5 + n) << 0;
 }
 
 /***/ }),
@@ -119,11 +123,11 @@ function getAngleBetweenPoints(x1, y1, x2, y2) {
 /* unused harmony export linear */
 /* unused harmony export easeInQuad */
 /* harmony export (immutable) */ __webpack_exports__["a"] = easeOutQuad;
-/* harmony export (immutable) */ __webpack_exports__["c"] = easeInOutQuad;
-/* harmony export (immutable) */ __webpack_exports__["d"] = easeInCubic;
+/* harmony export (immutable) */ __webpack_exports__["b"] = easeInOutQuad;
+/* harmony export (immutable) */ __webpack_exports__["c"] = easeInCubic;
 /* unused harmony export easeOutCubic */
 /* unused harmony export easeInOutCubic */
-/* harmony export (immutable) */ __webpack_exports__["b"] = easeInQuart;
+/* harmony export (immutable) */ __webpack_exports__["d"] = easeInQuart;
 /* unused harmony export easeOutQuart */
 /* unused harmony export easeInOutQuart */
 /* unused harmony export easeInQuint */
@@ -203,10 +207,106 @@ function easeInOutQuint(t) {
 
 
 
+class CanvasRenderer {
+  constructor(rootNode, color) {
+    this.diagonal = 0;
+
+    this._rootNode = rootNode;
+
+
+    // Clean root node, append canvas.
+    while (rootNode.firstChild) {
+      rootNode.removeChild(rootNode.firstChild);
+    }
+    this._canvas = document.createElement('canvas');
+    this._ctx = this._canvas.getContext('2d');
+    rootNode.appendChild(this._canvas);
+
+    // Device pixel ratio.
+    this._DPR = 1;// window.devicePixelRatio;
+
+    this._currentColor;
+    this.currentColor = color;
+  }
+
+  set currentColor(color) {
+    this._currentColor = color;
+
+    this._rootNode.style.backgroundColor =
+        `rgb(${this._currentColor.background.r},
+             ${this._currentColor.background.g},
+             ${this._currentColor.background.b})`;
+  }
+
+  get currentColor() {
+    return this._currentColor;
+  }
+
+  resize(width, height) {
+    this._canvas.style.width = `${width}px`;
+    this._canvas.style.height = `${height}px`;
+    this._canvas.setAttribute('width', `${width * this._DPR}px`);
+    this._canvas.setAttribute('height', `${height * this._DPR}px`);
+
+    this.diagonal =
+        __WEBPACK_IMPORTED_MODULE_0__utils_js__["b" /* getDistance2d */](0, 0, this._canvas.width, this._canvas.height);
+  }
+
+  draw(points, waves) {
+    this._ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
+
+    this._ctx.fillStyle = `rgba(${this._currentColor.foreground.r},
+                                ${this._currentColor.foreground.g},
+                                ${this._currentColor.foreground.b}, 1)`;
+
+    this._ctx.beginPath();
+    points.forEach(p => {
+      this._ctx.moveTo(p.displayX * this._DPR, p.displayY * this._DPR);
+      this._ctx.lineTo(__WEBPACK_IMPORTED_MODULE_0__utils_js__["d" /* bitwiseRound */]((p.displayX + p.size) * this._DPR),
+          __WEBPACK_IMPORTED_MODULE_0__utils_js__["d" /* bitwiseRound */](p.displayY * this._DPR));
+      this._ctx.lineTo(__WEBPACK_IMPORTED_MODULE_0__utils_js__["d" /* bitwiseRound */]((p.displayX + p.size) * this._DPR),
+          __WEBPACK_IMPORTED_MODULE_0__utils_js__["d" /* bitwiseRound */]((p.displayY + p.size) * this._DPR));
+      this._ctx.lineTo(__WEBPACK_IMPORTED_MODULE_0__utils_js__["d" /* bitwiseRound */](p.displayX  * this._DPR),
+          __WEBPACK_IMPORTED_MODULE_0__utils_js__["d" /* bitwiseRound */]((p.displayY + p.size) * this._DPR));
+      this._ctx.lineTo(__WEBPACK_IMPORTED_MODULE_0__utils_js__["d" /* bitwiseRound */](p.displayX * this._DPR),
+          __WEBPACK_IMPORTED_MODULE_0__utils_js__["d" /* bitwiseRound */](p.displayY * this._DPR));
+    });
+    this._ctx.fill();
+
+    waves.forEach(wave => {
+      // Draw wave pulse. Opacity gets lower as the wave grows.
+      const crestR = wave.getEasedCrestValue();
+      if (crestR <= wave.easingRadius / 2) {
+        this._ctx.fillStyle =
+          `rgba(${this._currentColor.foreground.r},
+                ${this._currentColor.foreground.g},
+                ${this._currentColor.foreground.b},
+                ${this._currentColor.foreground.waveMaxOpacity *
+                    __WEBPACK_IMPORTED_MODULE_1__easing_js__["d" /* easeInQuart */](1 - crestR / (wave.easingRadius / 2))})`;
+
+        this._ctx.beginPath();
+        this._ctx.arc(wave.x * this._DPR, wave.y * this._DPR, crestR * this._DPR, 0, Math.PI * 2, true);
+        this._ctx.closePath();
+        this._ctx.fill();
+      }
+    });
+  }
+}
+/* harmony export (immutable) */ __webpack_exports__["a"] = CanvasRenderer;
+
+
+/***/ }),
+/* 3 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__utils_js__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__easing_js__ = __webpack_require__(1);
+
+
+
 class Grid {
-  constructor(w, h, gap, baseDotSize) {
-    this.width = w;
-    this.height = h;
+  constructor(gap, baseDotSize) {
     this.gap = gap;
     this.baseDotSize = baseDotSize;
 
@@ -217,28 +317,26 @@ class Grid {
 
     this._distFromWaves = [];
     this._angleFromWaves = [];
+
+    this._cols;
+    this._rows;
+
     this.points = [];
   }
 
-  init(w, h, nWaves) {
-    this.width = w;
-    this.height = h;
-
+  resize(w, h, nWaves) {
     this.points = [];
     this._distFromWaves = [];
     this._angleFromWaves = [];
 
-    const cols = Math.floor(this.width / this.gap);
-    const rows = Math.floor(this.height / this.gap);
+    this._cols = Math.floor(w / this.gap);
+    this._rows = Math.floor(h / this.gap);
 
-    const offsetX = Math.floor((this.width - cols * this.gap) / 2);
-    const offsetY = Math.floor((this.height - rows * this.gap) / 2);
-
-    for (const c of [...Array(cols + 1).keys()]) {
-      for (const r of [...Array(rows + 1).keys()]) {
+    for (const c of [...Array(this._cols + 1).keys()]) {
+      for (const r of [...Array(this._rows + 1).keys()]) {
         this.points.push({
-          x: c * this.gap + offsetX,
-          y: r * this.gap + offsetY,
+          x: c * this.gap + Math.floor((w - this._cols * this.gap) / 2),
+          y: r * this.gap + Math.floor((h - this._rows * this.gap) / 2),
           displayX: null,
           displayY: null,
           size: null
@@ -251,38 +349,39 @@ class Grid {
   }
 
   update(waves) {
-    for (const [pIndex, p] of this.points.entries()) {
+    let distFromCrest, angle, percDist, easedPercDist;
 
+    this.points.forEach((p, pIndex) => {
       p.displayX = p.x;
       p.displayY = p.y;
       p.size = this.baseDotSize;
 
-      for (const [wIndex, wave] of waves.entries()) {
-        const distFromCrest = Math.abs(
+      waves.forEach((wave, wIndex) => {
+        distFromCrest = Math.abs(
             this._getDistFromWave(pIndex, p, wIndex, wave) -
             wave.getEasedCrestValue());
 
         if (distFromCrest <= wave.crestAOE) {
-          const angle = this._getAngleFromWave(pIndex, p, wIndex, wave);
-          const percDist = (wave.crestAOE - distFromCrest) / wave.crestAOE;
-          const easedPercDist = __WEBPACK_IMPORTED_MODULE_1__easing_js__["c" /* easeInOutQuad */](percDist) * wave.crestAOE;
+          angle = this._getAngleFromWave(pIndex, p, wIndex, wave);
+          percDist = (wave.crestAOE - distFromCrest) / wave.crestAOE;
+          easedPercDist = __WEBPACK_IMPORTED_MODULE_1__easing_js__["b" /* easeInOutQuad */](percDist) * wave.crestAOE;
 
           p.displayX -= easedPercDist * this._posConst * Math.cos(angle);
           p.displayY -= easedPercDist * this._posConst * Math.sin(angle);
 
-          p.size += this._sizeConst * __WEBPACK_IMPORTED_MODULE_1__easing_js__["d" /* easeInCubic */](1 - distFromCrest / wave.crestAOE);
+          p.size += this._sizeConst * __WEBPACK_IMPORTED_MODULE_1__easing_js__["c" /* easeInCubic */](1 - distFromCrest / wave.crestAOE);
         }
-      }
+      });
 
       p.displayX -= p.size / 2;
       p.displayY -= p.size / 2;
-    }
+    });
   }
 
   _getDistFromWave(pIndex, p, wIndex, wave) {
     if (this._distFromWaves[pIndex][wIndex] === null) {
       this._distFromWaves[pIndex][wIndex] =
-          __WEBPACK_IMPORTED_MODULE_0__utils_js__["a" /* getDistance2d */](p.x, p.y, wave.x, wave.y);
+          __WEBPACK_IMPORTED_MODULE_0__utils_js__["b" /* getDistance2d */](p.x, p.y, wave.x, wave.y);
     }
     return this._distFromWaves[pIndex][wIndex];
   }
@@ -290,7 +389,7 @@ class Grid {
   _getAngleFromWave(pIndex, p, wIndex, wave) {
     if (this._angleFromWaves[pIndex][wIndex] === null) {
       this._angleFromWaves[pIndex][wIndex] =
-          __WEBPACK_IMPORTED_MODULE_0__utils_js__["e" /* getAngleBetweenPoints */](p.x, p.y, wave.x, wave.y);
+          __WEBPACK_IMPORTED_MODULE_0__utils_js__["c" /* getAngleBetweenPoints */](p.x, p.y, wave.x, wave.y);
     }
     return this._angleFromWaves[pIndex][wIndex];
   }
@@ -310,7 +409,118 @@ class Grid {
 
 
 /***/ }),
-/* 3 */
+/* 4 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__utils_js__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__easing_js__ = __webpack_require__(1);
+
+
+
+class SvgRenderer {
+  constructor(rootNode, color) {
+    this.diagonal = 0;
+    this._dots = [];
+
+    this._rootNode = rootNode;
+
+    // Clean root node, append canvas.
+    while (this._rootNode.firstChild) {
+      this._rootNode.removeChild(this._rootNode.firstChild);
+    }
+    this._svg = document.createElementNS("http://www.w3.org/2000/svg", 'svg');
+    this._svg.setAttributeNS(null, 'preserveAspectRatio', 'none');
+    this._rootNode.appendChild(this._svg);
+
+    this._initialDotSize;
+
+    this._currentColor;
+    this.currentColor = color;
+  }
+
+  set currentColor(color) {
+    this._currentColor = color;
+
+    this._svg.style.fill = `rgb(${this._currentColor.foreground.r},
+                                ${this._currentColor.foreground.g},
+                                ${this._currentColor.foreground.b})`;
+    this._rootNode.style.backgroundColor =
+        `rgb(${this._currentColor.background.r},
+             ${this._currentColor.background.g},
+             ${this._currentColor.background.b})`;
+  }
+
+  get currentColor() {
+    return this._currentColor;
+  }
+
+  resize(width, height) {
+    this.diagonal = __WEBPACK_IMPORTED_MODULE_0__utils_js__["b" /* getDistance2d */](0, 0, width, height);
+
+    this._svg.style.width = `${width}px`;
+    this._svg.style.height = `${height}px`;
+
+    // Removing dots means they will be replaced during the next draw() call.
+    this._dots = [];
+  }
+
+  draw(points, waves) {
+    if (!this._dots.length) {
+      while (this._svg.firstChild) {
+        this._svg.removeChild(this._svg.firstChild);
+      }
+
+      this._dots = points.map(p => {
+        const r = this._createRect(p.x, p.y, p.size);
+        this._svg.appendChild(r);
+        return r;
+      })
+    }
+
+    points.forEach((p, i) => {
+      if (!this._initialDotSize) {
+        this._initialDotSize = p.size;
+      }
+      this._dots[i].setAttribute('transform',
+          `translate(${p.displayX}, ${p.displayY}) scale(${p.size / this._initialDotSize})`);
+    });
+
+    // waves.forEach(wave => {
+    //   // Draw wave pulse. Opacity gets lower as the wave grows.
+    //   const crestR = wave.getEasedCrestValue();
+    //   if (crestR <= wave.easingRadius / 2) {
+    //     this._ctx.fillStyle =
+    //       `rgba(${this.colors[this.colorMode].r},
+    //             ${this.colors[this.colorMode].g},
+    //             ${this.colors[this.colorMode].b},
+    //             ${this.colors[this.colorMode].waveMaxOpacity *
+    //                 easing.easeInQuart(1 - crestR / (wave.easingRadius / 2))})`;
+
+    //     this._ctx.beginPath();
+    //     this._ctx.arc(wave.x * this._DPR, wave.y * this._DPR, crestR * this._DPR, 0, Math.PI * 2, true);
+    //     this._ctx.closePath();
+    //     this._ctx.fill();
+    //   }
+    // });
+  }
+
+  _createRect(x, y, size) {
+    const rect = document.createElementNS("http://www.w3.org/2000/svg", 'rect');
+    rect.setAttributeNS(null, 'x', 0);
+    rect.setAttributeNS(null, 'y', 0);
+    rect.setAttributeNS(null, 'width', size);
+    rect.setAttributeNS(null, 'height', size);
+    rect.setAttribute('transform', `translate(${x}, ${y})`);
+    rect.style.willChange = 'transform';
+    return rect;
+  }
+}
+/* harmony export (immutable) */ __webpack_exports__["a"] = SvgRenderer;
+
+
+/***/ }),
+/* 5 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -377,15 +587,19 @@ class Wave {
 
 
 /***/ }),
-/* 4 */
+/* 6 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__easing_js__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__utils_js__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wave_js__ = __webpack_require__(3);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__grid_js__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wave_js__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__grid_js__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__canvas_renderer_js__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__svg_renderer_js__ = __webpack_require__(4);
+
+
 
 
 
@@ -393,104 +607,110 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // Constants
 // it may as well be always 1 as everything is squar-y
-const DEVICE_PIXEL_RATIO = 1;
-const GRID_GAP = 40 * DEVICE_PIXEL_RATIO;
-const GRID_DOT_SIZE = 3 * DEVICE_PIXEL_RATIO;
-const WAVE_CREST_VELOCITY = 12 * DEVICE_PIXEL_RATIO;
-const WAVE_CREST_DECAY = 400 * DEVICE_PIXEL_RATIO;
-const WAVE_PULSE_MAX_OPACITY = 0.05;
-const COLOR_FG = {
-  dark: [255, 255, 255],
-  light: [40, 40, 40]
+const GRID_GAP = 40;
+const GRID_DOT_SIZE = 2;
+const WAVE_CREST_VELOCITY = 12;
+const WAVE_CREST_DECAY = 400;
+const COLOR_MODE_DARK = 'dark';
+const COLOR_MODE_LIGHT = 'light';
+const COLORS = {
+  [COLOR_MODE_DARK]: {
+    background: {r: 40, g: 40, b: 40, waveMaxOpacity: 0.02},
+    foreground: {r: 255, g: 255, b: 255, waveMaxOpacity: 0.02}
+  },
+  [COLOR_MODE_LIGHT]: {
+    background: {r: 240, g: 240, b: 240, waveMaxOpacity: 0.02},
+    foreground: {r: 40, g: 40, b: 40, waveMaxOpacity: 0.02}
+  }
 };
 
 // Variables
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
-const colorMode = document.body.classList.contains('dark-mode') ?
-    'dark' : 'light';
-console.log(colorMode);
+const root = document.getElementById('root');
+let currentColorPalette = COLOR_MODE_LIGHT;
+let renderer = new __WEBPACK_IMPORTED_MODULE_4__canvas_renderer_js__["a" /* default */](root, COLORS[currentColorPalette]);
+const grid = new __WEBPACK_IMPORTED_MODULE_3__grid_js__["a" /* default */](GRID_GAP, GRID_DOT_SIZE);
+const sketchSize = {w: 0, h: 0};
 
-let grid;
+let options = {
+  renderer: 'svg'
+};
+
 let waves = [];
-let canvasDiagonal;
 
-// Compute vars.
+let maxX, maxY;
+
 function onResize() {
-  canvas.setAttribute('width', `${window.innerWidth * DEVICE_PIXEL_RATIO}px`);
-  canvas.setAttribute('height', `${window.innerHeight * DEVICE_PIXEL_RATIO}px`);
+  sketchSize.w = window.innerWidth;
+  sketchSize.h = window.innerHeight;
 
-  grid.init(canvas.width, canvas.height, waves.length);
-  canvasDiagonal = __WEBPACK_IMPORTED_MODULE_1__utils_js__["a" /* getDistance2d */](0, 0, canvas.width, canvas.height);
+  renderer.resize(sketchSize.w, sketchSize.h);
+  grid.resize(sketchSize.w, sketchSize.h, waves.length);
 }
 
-
 function onPointerUp(evt) {
-  const coords = __WEBPACK_IMPORTED_MODULE_1__utils_js__["b" /* getMouseCoordinates */](evt,
-      __WEBPACK_IMPORTED_MODULE_1__utils_js__["c" /* createCanvasFullScreenBCR */](canvas), DEVICE_PIXEL_RATIO);
-  const maxX = __WEBPACK_IMPORTED_MODULE_1__utils_js__["d" /* absMax */](coords.x, coords.x - canvas.width);
-  const maxY = __WEBPACK_IMPORTED_MODULE_1__utils_js__["d" /* absMax */](coords.y, coords.y - canvas.height);
+  maxX = __WEBPACK_IMPORTED_MODULE_1__utils_js__["a" /* absMax */](evt.clientX, evt.clientX - sketchSize.w);
+  maxY = __WEBPACK_IMPORTED_MODULE_1__utils_js__["a" /* absMax */](evt.clientY, evt.clientY - sketchSize.h);
 
-  waves.push(new __WEBPACK_IMPORTED_MODULE_2__wave_js__["a" /* default */](coords.x, coords.y,
+  waves.push(new __WEBPACK_IMPORTED_MODULE_2__wave_js__["a" /* default */](evt.clientX, evt.clientY,
       Math.sqrt(maxX * maxX + maxY * maxY) + WAVE_CREST_DECAY,
-      canvasDiagonal + WAVE_CREST_DECAY, WAVE_CREST_VELOCITY, WAVE_CREST_DECAY,
+      renderer.diagonal + WAVE_CREST_DECAY, WAVE_CREST_VELOCITY, WAVE_CREST_DECAY,
       __WEBPACK_IMPORTED_MODULE_0__easing_js__["a" /* easeOutQuad */]));
 
   grid.addWave();
 }
 
-function fillCircle(x, y, r) {
-  ctx.beginPath();
-  ctx.arc(x, y, r, 0, Math.PI * 2, true);
-  ctx.closePath();
-  ctx.fill();
+function onKeyDown(evt) {
+  // 'c' key pressed.
+  if (evt.keyCode === 67) {
+    currentColorPalette = currentColorPalette === COLOR_MODE_LIGHT ?
+        COLOR_MODE_DARK : COLOR_MODE_LIGHT;
+    renderer.currentColor = COLORS[currentColorPalette];
+  }
 }
 
 // Draw entry point (rendering loop).
 function draw(ts) {
   requestAnimationFrame(draw);
 
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  // Draw the grid.
-  ctx.fillStyle = `rgba(${COLOR_FG[colorMode][0]},
-                        ${COLOR_FG[colorMode][1]},
-                        ${COLOR_FG[colorMode][2]}, 1)`;
   grid.update(waves);
-  grid.points.forEach(p => ctx.fillRect(p.displayX, p.displayY, p.size, p.size));
+  renderer.draw(grid.points, waves);
 
-  for (const [index, wave] of waves.entries()) {
-    // Draw wave pulse.
-    const crestR = wave.getEasedCrestValue();
-    if (crestR <= wave.easingRadius / 2) {
-      const opacity = WAVE_PULSE_MAX_OPACITY *
-          __WEBPACK_IMPORTED_MODULE_0__easing_js__["b" /* easeInQuart */](1 - crestR / (wave.easingRadius / 2));
-      ctx.fillStyle = `rgba(${COLOR_FG[colorMode][0]},
-                            ${COLOR_FG[colorMode][1]},
-                            ${COLOR_FG[colorMode][2]},
-                            ${opacity})`;
-      fillCircle(wave.x, wave.y, wave.getEasedCrestValue());
-    }
-
-    // Grow wave / remove if expired.
+  // Grow wave, remove if expired.
+  waves.forEach((wave, wIndex) => {
     wave.grow();
     if (wave.isExpired()) {
-      waves.splice(index, 1);
-      grid.removeWave(index);
+      waves.splice(wIndex, 1);
+      grid.removeWave(wIndex);
     }
-  }
+  });
 }
 
 // Draw entry point
 function start() {
-  grid = new __WEBPACK_IMPORTED_MODULE_3__grid_js__["a" /* default */](canvas.width, canvas.height, GRID_GAP, GRID_DOT_SIZE);
+  const gui = new dat.GUI();
+  var controller = gui.add(options, 'renderer', ['canvas', 'svg']);
+
+  controller.onFinishChange(function(value) {
+    switch(value) {
+      case 'svg':
+        renderer = new __WEBPACK_IMPORTED_MODULE_5__svg_renderer_js__["a" /* default */](root, COLORS[currentColorPalette]);
+        onResize();
+        break;
+      case 'canvas':
+        renderer = new __WEBPACK_IMPORTED_MODULE_4__canvas_renderer_js__["a" /* default */](root, COLORS[currentColorPalette]);
+        onResize();
+        break;
+    }
+  });
+
   onResize();
   requestAnimationFrame(draw);
 }
 
 // Event listeners
 window.addEventListener('resize', onResize, false);
-canvas.addEventListener('pointerup', onPointerUp, false);
+root.addEventListener('pointerup', onPointerUp, false);
+document.addEventListener('keydown', onKeyDown, false);
 
 // Start sketch
 start();
