@@ -109,7 +109,7 @@ function start() {
 
 // Event listeners
 window.addEventListener('resize', onResize, false);
-document.addEventListener('pointerup', onPointerUp, false);
+root.addEventListener('pointerup', onPointerUp, false);
 document.addEventListener('keydown', onKeyDown, false);
 
 // Start sketch
