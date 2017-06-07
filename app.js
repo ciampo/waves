@@ -10,16 +10,23 @@ const GRID_GAP = 40;
 const GRID_DOT_SIZE = 3;
 const WAVE_CREST_VELOCITY = 12;
 const WAVE_CREST_DECAY = 400;
-const DARK_MODE_CLASS = 'dark-mode';
-const COLORS_FG = {
-  dark: {r: 255, g: 255, b: 255, waveMaxOpacity: 0.02},
-  light: {r: 40, g: 40, b: 40, waveMaxOpacity: 0.02}
+const COLOR_MODE_DARK = 'dark';
+const COLOR_MODE_LIGHT = 'light';
+const COLORS = {
+  [COLOR_MODE_DARK]: {
+    background: {r: 40, g: 40, b: 40, waveMaxOpacity: 0.02},
+    foreground: {r: 255, g: 255, b: 255, waveMaxOpacity: 0.02}
+  },
+  [COLOR_MODE_LIGHT]: {
+    background: {r: 240, g: 240, b: 240, waveMaxOpacity: 0.02},
+    foreground: {r: 40, g: 40, b: 40, waveMaxOpacity: 0.02}
+  }
 };
 
 // Variables
 const root = document.getElementById('root');
-const renderer = new CanvasRenderer(root, COLORS_FG,
-    document.body.classList.contains(DARK_MODE_CLASS) ? 'dark' : 'light');
+let currentColorPalette = COLOR_MODE_LIGHT;
+let renderer = new CanvasRenderer(root, COLORS[currentColorPalette]);
 const grid = new Grid(GRID_GAP, GRID_DOT_SIZE);
 const sketchSize = {w: 0, h: 0};
 
@@ -50,8 +57,9 @@ function onPointerUp(evt) {
 function onKeyDown(evt) {
   // 'c' key pressed.
   if (evt.keyCode === 67) {
-    document.body.classList.toggle(DARK_MODE_CLASS);
-    renderer.colorMode = renderer.colorMode === 'light' ? 'dark' : 'light';
+    currentColorPalette = currentColorPalette === COLOR_MODE_LIGHT ?
+        COLOR_MODE_DARK : COLOR_MODE_LIGHT;
+    renderer.currentColor = COLORS[currentColorPalette];
   }
 }
 

@@ -2,27 +2,43 @@ import * as utils from './utils.js';
 import * as easing from './easing.js';
 
 export default class CanvasRenderer {
-  constructor(rootNode, colors, colorMode) {
+  constructor(rootNode, color) {
+    this.diagonal = 0;
+
+    this._rootNode = rootNode;
+
+
     // Clean root node, append canvas.
     while (rootNode.firstChild) {
       rootNode.removeChild(rootNode.firstChild);
     }
     this._canvas = document.createElement('canvas');
-    this._canvas.classList.add('full-screen');
-    this._canvas.setAttribute('touch-action', 'none')
     this._ctx = this._canvas.getContext('2d');
     rootNode.appendChild(this._canvas);
 
     // Device pixel ratio.
     this._DPR = 1;// window.devicePixelRatio;
 
-    this.diagonal = 0;
+    this._currentColor;
+    this.currentColor = color;
+  }
 
-    this.colors = colors;
-    this.colorMode = colorMode;
+  set currentColor(color) {
+    this._currentColor = color;
+
+    this._rootNode.style.backgroundColor =
+        `rgb(${this._currentColor.background.r},
+             ${this._currentColor.background.g},
+             ${this._currentColor.background.b})`;
+  }
+
+  get currentColor() {
+    return this._currentColor;
   }
 
   resize(width, height) {
+    this._canvas.style.width = `${width}px`;
+    this._canvas.style.height = `${height}px`;
     this._canvas.setAttribute('width', `${width * this._DPR}px`);
     this._canvas.setAttribute('height', `${height * this._DPR}px`);
 
@@ -33,9 +49,9 @@ export default class CanvasRenderer {
   draw(points, waves) {
     this._ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
 
-    this._ctx.fillStyle = `rgba(${this.colors[this.colorMode].r},
-                                ${this.colors[this.colorMode].g},
-                                ${this.colors[this.colorMode].b}, 1)`;
+    this._ctx.fillStyle = `rgba(${this._currentColor.foreground.r},
+                                ${this._currentColor.foreground.g},
+                                ${this._currentColor.foreground.b}, 1)`;
 
     this._ctx.beginPath();
     points.forEach(p => {
@@ -56,10 +72,10 @@ export default class CanvasRenderer {
       const crestR = wave.getEasedCrestValue();
       if (crestR <= wave.easingRadius / 2) {
         this._ctx.fillStyle =
-          `rgba(${this.colors[this.colorMode].r},
-                ${this.colors[this.colorMode].g},
-                ${this.colors[this.colorMode].b},
-                ${this.colors[this.colorMode].waveMaxOpacity *
+          `rgba(${this._currentColor.foreground.r},
+                ${this._currentColor.foreground.g},
+                ${this._currentColor.foreground.b},
+                ${this._currentColor.foreground.waveMaxOpacity *
                     easing.easeInQuart(1 - crestR / (wave.easingRadius / 2))})`;
 
         this._ctx.beginPath();
