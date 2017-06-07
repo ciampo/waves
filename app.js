@@ -27,7 +27,7 @@ const COLORS = {
 // Variables
 const root = document.getElementById('root');
 let currentColorPalette = COLOR_MODE_LIGHT;
-let renderer = new CanvasRenderer(root, COLORS[currentColorPalette]);
+let renderer = new SvgRenderer(root, COLORS[currentColorPalette]);
 const grid = new Grid(GRID_GAP, GRID_DOT_SIZE);
 const sketchSize = {w: 0, h: 0};
 
