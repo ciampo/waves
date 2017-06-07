@@ -8,8 +8,3 @@ As an exercise, the scene will be rendered with different techniques:
 - SVG
 - DOM
 - WebGL (with shaders)
-
-TODO:
-- refactor code and split canvas renderer on a separate class
-- investigate perf problems (possible memory leak, rendering canvas grid in one pass by using paths)
-- implement other renderers
