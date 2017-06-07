@@ -3,6 +3,7 @@ import * as utils from './utils.js';
 import Wave from './wave.js';
 import Grid from './grid.js';
 import CanvasRenderer from './canvas-renderer.js';
+import SvgRenderer from './svg-renderer.js';
 
 // Constants
 // it may as well be always 1 as everything is squar-y
