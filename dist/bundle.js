@@ -75,8 +75,8 @@
 /* harmony export (immutable) */ __webpack_exports__["b"] = getDistance2d;
 /* harmony export (immutable) */ __webpack_exports__["a"] = absMax;
 /* unused harmony export createCanvasFullScreenBCR */
-/* harmony export (immutable) */ __webpack_exports__["c"] = getAngleBetweenPoints;
-/* harmony export (immutable) */ __webpack_exports__["d"] = bitwiseRound;
+/* harmony export (immutable) */ __webpack_exports__["d"] = getAngleBetweenPoints;
+/* harmony export (immutable) */ __webpack_exports__["c"] = bitwiseRound;
 function getMouseCoordinates(evt, canvasBCR, devicePxRatio = 1) {
   let toReturn = {};
 
@@ -123,11 +123,11 @@ function bitwiseRound(n) {
 /* unused harmony export linear */
 /* unused harmony export easeInQuad */
 /* harmony export (immutable) */ __webpack_exports__["a"] = easeOutQuad;
-/* harmony export (immutable) */ __webpack_exports__["b"] = easeInOutQuad;
-/* harmony export (immutable) */ __webpack_exports__["c"] = easeInCubic;
+/* harmony export (immutable) */ __webpack_exports__["c"] = easeInOutQuad;
+/* harmony export (immutable) */ __webpack_exports__["d"] = easeInCubic;
 /* unused harmony export easeOutCubic */
 /* unused harmony export easeInOutCubic */
-/* harmony export (immutable) */ __webpack_exports__["d"] = easeInQuart;
+/* harmony export (immutable) */ __webpack_exports__["b"] = easeInQuart;
 /* unused harmony export easeOutQuart */
 /* unused harmony export easeInOutQuart */
 /* unused harmony export easeInQuint */
@@ -262,27 +262,29 @@ class CanvasRenderer {
     this._ctx.beginPath();
     points.forEach(p => {
       this._ctx.moveTo(p.displayX * this._DPR, p.displayY * this._DPR);
-      this._ctx.lineTo(__WEBPACK_IMPORTED_MODULE_0__utils_js__["d" /* bitwiseRound */]((p.displayX + p.size) * this._DPR),
-          __WEBPACK_IMPORTED_MODULE_0__utils_js__["d" /* bitwiseRound */](p.displayY * this._DPR));
-      this._ctx.lineTo(__WEBPACK_IMPORTED_MODULE_0__utils_js__["d" /* bitwiseRound */]((p.displayX + p.size) * this._DPR),
-          __WEBPACK_IMPORTED_MODULE_0__utils_js__["d" /* bitwiseRound */]((p.displayY + p.size) * this._DPR));
-      this._ctx.lineTo(__WEBPACK_IMPORTED_MODULE_0__utils_js__["d" /* bitwiseRound */](p.displayX  * this._DPR),
-          __WEBPACK_IMPORTED_MODULE_0__utils_js__["d" /* bitwiseRound */]((p.displayY + p.size) * this._DPR));
-      this._ctx.lineTo(__WEBPACK_IMPORTED_MODULE_0__utils_js__["d" /* bitwiseRound */](p.displayX * this._DPR),
-          __WEBPACK_IMPORTED_MODULE_0__utils_js__["d" /* bitwiseRound */](p.displayY * this._DPR));
+      this._ctx.lineTo(__WEBPACK_IMPORTED_MODULE_0__utils_js__["c" /* bitwiseRound */]((p.displayX + p.size) * this._DPR),
+          __WEBPACK_IMPORTED_MODULE_0__utils_js__["c" /* bitwiseRound */](p.displayY * this._DPR));
+      this._ctx.lineTo(__WEBPACK_IMPORTED_MODULE_0__utils_js__["c" /* bitwiseRound */]((p.displayX + p.size) * this._DPR),
+          __WEBPACK_IMPORTED_MODULE_0__utils_js__["c" /* bitwiseRound */]((p.displayY + p.size) * this._DPR));
+      this._ctx.lineTo(__WEBPACK_IMPORTED_MODULE_0__utils_js__["c" /* bitwiseRound */](p.displayX  * this._DPR),
+          __WEBPACK_IMPORTED_MODULE_0__utils_js__["c" /* bitwiseRound */]((p.displayY + p.size) * this._DPR));
+      this._ctx.lineTo(__WEBPACK_IMPORTED_MODULE_0__utils_js__["c" /* bitwiseRound */](p.displayX * this._DPR),
+          __WEBPACK_IMPORTED_MODULE_0__utils_js__["c" /* bitwiseRound */](p.displayY * this._DPR));
     });
     this._ctx.fill();
 
     waves.forEach(wave => {
       // Draw wave pulse. Opacity gets lower as the wave grows.
       const crestR = wave.getEasedCrestValue();
-      if (crestR <= wave.easingRadius / 2) {
+      const normalisedHalfCrest = crestR / (wave.easingRadius / 2);
+
+      if (normalisedHalfCrest <= 1) {
         this._ctx.fillStyle =
           `rgba(${this._currentColor.foreground.r},
                 ${this._currentColor.foreground.g},
                 ${this._currentColor.foreground.b},
                 ${this._currentColor.foreground.waveMaxOpacity *
-                    __WEBPACK_IMPORTED_MODULE_1__easing_js__["d" /* easeInQuart */](1 - crestR / (wave.easingRadius / 2))})`;
+                    __WEBPACK_IMPORTED_MODULE_1__easing_js__["b" /* easeInQuart */](1 - normalisedHalfCrest)})`;
 
         this._ctx.beginPath();
         this._ctx.arc(wave.x * this._DPR, wave.y * this._DPR, crestR * this._DPR, 0, Math.PI * 2, true);
@@ -364,12 +366,12 @@ class Grid {
         if (distFromCrest <= wave.crestAOE) {
           angle = this._getAngleFromWave(pIndex, p, wIndex, wave);
           percDist = (wave.crestAOE - distFromCrest) / wave.crestAOE;
-          easedPercDist = __WEBPACK_IMPORTED_MODULE_1__easing_js__["b" /* easeInOutQuad */](percDist) * wave.crestAOE;
+          easedPercDist = __WEBPACK_IMPORTED_MODULE_1__easing_js__["c" /* easeInOutQuad */](percDist) * wave.crestAOE;
 
           p.displayX -= easedPercDist * this._posConst * Math.cos(angle);
           p.displayY -= easedPercDist * this._posConst * Math.sin(angle);
 
-          p.size += this._sizeConst * __WEBPACK_IMPORTED_MODULE_1__easing_js__["c" /* easeInCubic */](1 - distFromCrest / wave.crestAOE);
+          p.size += this._sizeConst * __WEBPACK_IMPORTED_MODULE_1__easing_js__["d" /* easeInCubic */](1 - distFromCrest / wave.crestAOE);
         }
       });
 
@@ -389,7 +391,7 @@ class Grid {
   _getAngleFromWave(pIndex, p, wIndex, wave) {
     if (this._angleFromWaves[pIndex][wIndex] === null) {
       this._angleFromWaves[pIndex][wIndex] =
-          __WEBPACK_IMPORTED_MODULE_0__utils_js__["c" /* getAngleBetweenPoints */](p.x, p.y, wave.x, wave.y);
+          __WEBPACK_IMPORTED_MODULE_0__utils_js__["d" /* getAngleBetweenPoints */](p.x, p.y, wave.x, wave.y);
     }
     return this._angleFromWaves[pIndex][wIndex];
   }
@@ -422,6 +424,7 @@ class SvgRenderer {
   constructor(rootNode, color) {
     this.diagonal = 0;
     this._dots = [];
+    this._ripples = [];
 
     this._rootNode = rootNode;
 
@@ -431,9 +434,11 @@ class SvgRenderer {
     }
     this._svg = document.createElementNS("http://www.w3.org/2000/svg", 'svg');
     this._svg.setAttributeNS(null, 'preserveAspectRatio', 'none');
+    this._dotsContainer = document.createElementNS("http://www.w3.org/2000/svg", 'g');
+    this._ripplesContainer = document.createElementNS("http://www.w3.org/2000/svg", 'g');
+    this._svg.appendChild(this._dotsContainer);
+    this._svg.appendChild(this._ripplesContainer);
     this._rootNode.appendChild(this._svg);
-
-    this._initialDotSize;
 
     this._currentColor;
     this.currentColor = color;
@@ -467,56 +472,75 @@ class SvgRenderer {
 
   draw(points, waves) {
     if (!this._dots.length) {
-      while (this._svg.firstChild) {
-        this._svg.removeChild(this._svg.firstChild);
+      while (this._dotsContainer.firstChild) {
+        this._dotsContainer.removeChild(this._dotsContainer.firstChild);
       }
 
       this._dots = points.map(p => {
-        const r = this._createRect(p.x, p.y, p.size);
-        this._svg.appendChild(r);
+        const r = this._createDot();
+        this._dotsContainer.appendChild(r);
         return r;
       })
     }
 
     points.forEach((p, i) => {
-      if (!this._initialDotSize) {
-        this._initialDotSize = p.size;
-      }
       this._dots[i].setAttribute('transform',
-          `translate(${p.displayX}, ${p.displayY}) scale(${p.size / this._initialDotSize})`);
+          `translate(${p.displayX}, ${p.displayY}) scale(${p.size})`);
     });
 
-    // waves.forEach(wave => {
-    //   // Draw wave pulse. Opacity gets lower as the wave grows.
-    //   const crestR = wave.getEasedCrestValue();
-    //   if (crestR <= wave.easingRadius / 2) {
-    //     this._ctx.fillStyle =
-    //       `rgba(${this.colors[this.colorMode].r},
-    //             ${this.colors[this.colorMode].g},
-    //             ${this.colors[this.colorMode].b},
-    //             ${this.colors[this.colorMode].waveMaxOpacity *
-    //                 easing.easeInQuart(1 - crestR / (wave.easingRadius / 2))})`;
+    // Recicle ripple elements, or add only new ripples only if necessary.
+    while (this._ripples.length < waves.length) {
+      const r = this._createRipple();
+      this._ripplesContainer.appendChild(r);
+      this._ripples.push(r);
+    }
+    while (this._ripples.length > waves.length) {
+      this._ripplesContainer.removeChild(this._ripplesContainer.lastChild);
+      this._ripples.pop();
+    }
 
-    //     this._ctx.beginPath();
-    //     this._ctx.arc(wave.x * this._DPR, wave.y * this._DPR, crestR * this._DPR, 0, Math.PI * 2, true);
-    //     this._ctx.closePath();
-    //     this._ctx.fill();
-    //   }
-    // });
+    // loop over waves -> ripples
+
+    waves.forEach((wave, i) => {
+      // Draw wave pulse. Opacity gets lower as the wave grows.
+      const crestR = wave.getEasedCrestValue();
+      const ripple = this._ripples[i];
+      const normalisedHalfCrest = crestR / (wave.easingRadius / 2);
+
+      if (normalisedHalfCrest <= 1) {
+        ripple.style.fill = `rgba(${this._currentColor.foreground.r},
+            ${this._currentColor.foreground.g},
+            ${this._currentColor.foreground.b},
+            ${this._currentColor.foreground.waveMaxOpacity *
+                __WEBPACK_IMPORTED_MODULE_1__easing_js__["b" /* easeInQuart */](1 - normalisedHalfCrest)})`;
+
+        ripple.setAttribute('transform',
+            `translate(${wave.x}, ${wave.y}) scale(${crestR})`);
+      } else {
+        ripple.setAttribute('transform', 'scale(0)');
+      }
+    });
   }
 
-  _createRect(x, y, size) {
+  _createDot() {
     const rect = document.createElementNS("http://www.w3.org/2000/svg", 'rect');
     rect.setAttributeNS(null, 'x', 0);
     rect.setAttributeNS(null, 'y', 0);
-    rect.setAttributeNS(null, 'width', size);
-    rect.setAttributeNS(null, 'height', size);
-    rect.setAttribute('transform', `translate(${x}, ${y})`);
-    rect.style.willChange = 'transform';
+    rect.setAttributeNS(null, 'width', 1);
+    rect.setAttributeNS(null, 'height', 1);
     return rect;
+  }
+
+  _createRipple() {
+    const circle = document.createElementNS("http://www.w3.org/2000/svg", 'circle');
+    circle.setAttributeNS(null, 'cx', 0);
+    circle.setAttributeNS(null, 'cy', 0);
+    circle.setAttributeNS(null, 'r', 1);
+    return circle;
   }
 }
 /* harmony export (immutable) */ __webpack_exports__["a"] = SvgRenderer;
+
 
 
 /***/ }),
@@ -627,7 +651,7 @@ const COLORS = {
 // Variables
 const root = document.getElementById('root');
 let currentColorPalette = COLOR_MODE_LIGHT;
-let renderer = new __WEBPACK_IMPORTED_MODULE_4__canvas_renderer_js__["a" /* default */](root, COLORS[currentColorPalette]);
+let renderer = new __WEBPACK_IMPORTED_MODULE_5__svg_renderer_js__["a" /* default */](root, COLORS[currentColorPalette]);
 const grid = new __WEBPACK_IMPORTED_MODULE_3__grid_js__["a" /* default */](GRID_GAP, GRID_DOT_SIZE);
 const sketchSize = {w: 0, h: 0};
 
