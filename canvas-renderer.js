@@ -70,13 +70,15 @@ export default class CanvasRenderer {
     waves.forEach(wave => {
       // Draw wave pulse. Opacity gets lower as the wave grows.
       const crestR = wave.getEasedCrestValue();
-      if (crestR <= wave.easingRadius / 2) {
+      const normalisedHalfCrest = crestR / (wave.easingRadius / 2);
+
+      if (normalisedHalfCrest <= 1) {
         this._ctx.fillStyle =
           `rgba(${this._currentColor.foreground.r},
                 ${this._currentColor.foreground.g},
                 ${this._currentColor.foreground.b},
                 ${this._currentColor.foreground.waveMaxOpacity *
-                    easing.easeInQuart(1 - crestR / (wave.easingRadius / 2))})`;
+                    easing.easeInQuart(1 - normalisedHalfCrest)})`;
 
         this._ctx.beginPath();
         this._ctx.arc(wave.x * this._DPR, wave.y * this._DPR, crestR * this._DPR, 0, Math.PI * 2, true);

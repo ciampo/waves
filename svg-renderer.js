@@ -5,6 +5,7 @@ export default class SvgRenderer {
   constructor(rootNode, color) {
     this.diagonal = 0;
     this._dots = [];
+    this._ripples = [];
 
     this._rootNode = rootNode;
 
@@ -14,6 +15,10 @@ export default class SvgRenderer {
     }
     this._svg = document.createElementNS("http://www.w3.org/2000/svg", 'svg');
     this._svg.setAttributeNS(null, 'preserveAspectRatio', 'none');
+    this._dotsContainer = document.createElementNS("http://www.w3.org/2000/svg", 'g');
+    this._ripplesContainer = document.createElementNS("http://www.w3.org/2000/svg", 'g');
+    this._svg.appendChild(this._dotsContainer);
+    this._svg.appendChild(this._ripplesContainer);
     this._rootNode.appendChild(this._svg);
 
     this._currentColor;
@@ -48,13 +53,13 @@ export default class SvgRenderer {
 
   draw(points, waves) {
     if (!this._dots.length) {
-      while (this._svg.firstChild) {
-        this._svg.removeChild(this._svg.firstChild);
+      while (this._dotsContainer.firstChild) {
+        this._dotsContainer.removeChild(this._dotsContainer.firstChild);
       }
 
       this._dots = points.map(p => {
-        const r = this._createRect(p.x, p.y, p.size);
-        this._svg.appendChild(r);
+        const r = this._createDot();
+        this._dotsContainer.appendChild(r);
         return r;
       })
     }
@@ -64,39 +69,54 @@ export default class SvgRenderer {
           `translate(${p.displayX}, ${p.displayY}) scale(${p.size})`);
     });
 
-    // idea: add / remove ripples by checking waves.lenght
-    // also add/remove <circle> from the svg element
-    // new ripple: radius 1, fill opacity: 0
+    // Recicle ripple elements, or add only new ripples only if necessary.
+    while (this._ripples.length < waves.length) {
+      const r = this._createRipple();
+      this._ripplesContainer.appendChild(r);
+      this._ripples.push(r);
+    }
+    while (this._ripples.length > waves.length) {
+      this._ripplesContainer.removeChild(this._ripplesContainer.lastChild);
+      this._ripples.pop();
+    }
 
     // loop over waves -> ripples
 
-    // waves.forEach(wave => {
-    //   // Draw wave pulse. Opacity gets lower as the wave grows.
-    //   const crestR = wave.getEasedCrestValue();
-    //   if (crestR <= wave.easingRadius / 2) {
-    //     this._ctx.fillStyle =
-    //       `rgba(${this.colors[this.colorMode].r},
-    //             ${this.colors[this.colorMode].g},
-    //             ${this.colors[this.colorMode].b},
-    //             ${this.colors[this.colorMode].waveMaxOpacity *
-    //                 easing.easeInQuart(1 - crestR / (wave.easingRadius / 2))})`;
+    waves.forEach((wave, i) => {
+      // Draw wave pulse. Opacity gets lower as the wave grows.
+      const crestR = wave.getEasedCrestValue();
+      const ripple = this._ripples[i];
+      const normalisedHalfCrest = crestR / (wave.easingRadius / 2);
 
-    //     this._ctx.beginPath();
-    //     this._ctx.arc(wave.x * this._DPR, wave.y * this._DPR, crestR * this._DPR, 0, Math.PI * 2, true);
-    //     this._ctx.closePath();
-    //     this._ctx.fill();
-    //   }
-    // });
+      if (normalisedHalfCrest <= 1) {
+        ripple.style.fill = `rgba(${this._currentColor.foreground.r},
+            ${this._currentColor.foreground.g},
+            ${this._currentColor.foreground.b},
+            ${this._currentColor.foreground.waveMaxOpacity *
+                easing.easeInQuart(1 - normalisedHalfCrest)})`;
+
+        ripple.setAttribute('transform',
+            `translate(${wave.x}, ${wave.y}) scale(${crestR})`);
+      } else {
+        ripple.setAttribute('transform', 'scale(0)');
+      }
+    });
   }
 
-  _createRect(x, y, size) {
+  _createDot() {
     const rect = document.createElementNS("http://www.w3.org/2000/svg", 'rect');
     rect.setAttributeNS(null, 'x', 0);
     rect.setAttributeNS(null, 'y', 0);
     rect.setAttributeNS(null, 'width', 1);
     rect.setAttributeNS(null, 'height', 1);
-    rect.setAttribute('transform', `translate(${x}, ${y})`);
-    rect.style.willChange = 'transform';
     return rect;
+  }
+
+  _createRipple() {
+    const circle = document.createElementNS("http://www.w3.org/2000/svg", 'circle');
+    circle.setAttributeNS(null, 'cx', 0);
+    circle.setAttributeNS(null, 'cy', 0);
+    circle.setAttributeNS(null, 'r', 1);
+    return circle;
   }
 }
