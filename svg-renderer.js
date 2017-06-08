@@ -16,8 +16,6 @@ export default class SvgRenderer {
     this._svg.setAttributeNS(null, 'preserveAspectRatio', 'none');
     this._rootNode.appendChild(this._svg);
 
-    this._initialDotSize;
-
     this._currentColor;
     this.currentColor = color;
   }
@@ -62,12 +60,15 @@ export default class SvgRenderer {
     }
 
     points.forEach((p, i) => {
-      if (!this._initialDotSize) {
-        this._initialDotSize = p.size;
-      }
       this._dots[i].setAttribute('transform',
-          `translate(${p.displayX}, ${p.displayY}) scale(${p.size / this._initialDotSize})`);
+          `translate(${p.displayX}, ${p.displayY}) scale(${p.size})`);
     });
+
+    // idea: add / remove ripples by checking waves.lenght
+    // also add/remove <circle> from the svg element
+    // new ripple: radius 1, fill opacity: 0
+
+    // loop over waves -> ripples
 
     // waves.forEach(wave => {
     //   // Draw wave pulse. Opacity gets lower as the wave grows.
@@ -92,8 +93,8 @@ export default class SvgRenderer {
     const rect = document.createElementNS("http://www.w3.org/2000/svg", 'rect');
     rect.setAttributeNS(null, 'x', 0);
     rect.setAttributeNS(null, 'y', 0);
-    rect.setAttributeNS(null, 'width', size);
-    rect.setAttributeNS(null, 'height', size);
+    rect.setAttributeNS(null, 'width', 1);
+    rect.setAttributeNS(null, 'height', 1);
     rect.setAttribute('transform', `translate(${x}, ${y})`);
     rect.style.willChange = 'transform';
     return rect;
