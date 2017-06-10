@@ -1,6 +1,8 @@
 import * as utils from './utils.js';
 import * as easing from './easing.js';
 
+const SVGns = 'http://www.w3.org/2000/svg';
+
 export default class SvgRenderer {
   constructor(rootNode, color) {
     this.diagonal = 0;
@@ -13,10 +15,10 @@ export default class SvgRenderer {
     while (this._rootNode.firstChild) {
       this._rootNode.removeChild(this._rootNode.firstChild);
     }
-    this._svg = document.createElementNS("http://www.w3.org/2000/svg", 'svg');
+    this._svg = document.createElementNS(SVGns, 'svg');
     this._svg.setAttributeNS(null, 'preserveAspectRatio', 'none');
-    this._dotsContainer = document.createElementNS("http://www.w3.org/2000/svg", 'g');
-    this._ripplesContainer = document.createElementNS("http://www.w3.org/2000/svg", 'g');
+    this._dotsContainer = document.createElementNS(SVGns, 'g');
+    this._ripplesContainer = document.createElementNS(SVGns, 'g');
     this._svg.appendChild(this._dotsContainer);
     this._svg.appendChild(this._ripplesContainer);
     this._rootNode.appendChild(this._svg);
@@ -104,7 +106,7 @@ export default class SvgRenderer {
   }
 
   _createDot() {
-    const rect = document.createElementNS("http://www.w3.org/2000/svg", 'rect');
+    const rect = document.createElementNS(SVGns, 'rect');
     rect.setAttributeNS(null, 'x', 0);
     rect.setAttributeNS(null, 'y', 0);
     rect.setAttributeNS(null, 'width', 1);
@@ -113,7 +115,7 @@ export default class SvgRenderer {
   }
 
   _createRipple() {
-    const circle = document.createElementNS("http://www.w3.org/2000/svg", 'circle');
+    const circle = document.createElementNS(SVGns, 'circle');
     circle.setAttributeNS(null, 'cx', 0);
     circle.setAttributeNS(null, 'cy', 0);
     circle.setAttributeNS(null, 'r', 1);
