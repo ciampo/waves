@@ -63,7 +63,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 6);
+/******/ 	return __webpack_require__(__webpack_require__.s = 7);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -72,11 +72,11 @@
 
 "use strict";
 /* unused harmony export getMouseCoordinates */
-/* harmony export (immutable) */ __webpack_exports__["b"] = getDistance2d;
-/* harmony export (immutable) */ __webpack_exports__["a"] = absMax;
+/* harmony export (immutable) */ __webpack_exports__["a"] = getDistance2d;
+/* harmony export (immutable) */ __webpack_exports__["b"] = absMax;
 /* unused harmony export createCanvasFullScreenBCR */
-/* harmony export (immutable) */ __webpack_exports__["d"] = getAngleBetweenPoints;
-/* harmony export (immutable) */ __webpack_exports__["c"] = bitwiseRound;
+/* harmony export (immutable) */ __webpack_exports__["c"] = getAngleBetweenPoints;
+/* harmony export (immutable) */ __webpack_exports__["d"] = bitwiseRound;
 function getMouseCoordinates(evt, canvasBCR, devicePxRatio = 1) {
   let toReturn = {};
 
@@ -202,17 +202,85 @@ function easeInOutQuint(t) {
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
+class AbstractRenderer {
+  constructor(rootNode, color) {
+    if (this.constructor === AbstractRenderer) {
+        throw new TypeError(`Abstract class "AbstractRenderer" cannot be
+            instantiated directly.`);
+    }
+
+    this.rootNode = rootNode;
+    this._currentColor = color;
+
+    // Check if all instance methods are implemented.
+    if (this.resize === AbstractRenderer.prototype.resize) {
+      throw new TypeError('Please implement abstract method "resize".');
+    }
+    if (this.draw === AbstractRenderer.prototype.draw) {
+      throw new TypeError('Please implement abstract method "draw".');
+    }
+  }
+
+  /**
+   * Sets the current color.
+   *
+   * @param {Object} color New current color.
+   *
+   * @memberof AbstractRenderer
+   */
+  set currentColor(color) {
+    this._currentColor = color;
+  }
+
+  /**
+   * Gets the current color
+   *
+   * @readonly
+   *
+   * @memberof AbstractRenderer
+   */
+  get currentColor() {
+    return this._currentColor;
+  }
+
+  /**
+   * Abstract method. Called when the size of the drawing surface has changed.
+   *
+   * @param {number} width New width of the canvas.
+   * @param {number} height New height of the canvas.
+   *
+   * @memberof AbstractRenderer
+   */
+  resize(width, height) {}
+
+  /**
+   * Abstract method. Called during the rendering loop.
+   *
+   * @param {Array<Object>} points List of the grid's points.
+   * @param {Array<Wave>} waves List of the active waves.
+   *
+   * @memberof AbstractRenderer
+   */
+  draw(points, waves) {}
+}
+/* harmony export (immutable) */ __webpack_exports__["a"] = AbstractRenderer;
+
+
+/***/ }),
+/* 3 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__utils_js__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__easing_js__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__renderer_js__ = __webpack_require__(2);
 
 
 
-class CanvasRenderer {
+
+class CanvasRenderer extends __WEBPACK_IMPORTED_MODULE_2__renderer_js__["a" /* default */] {
   constructor(rootNode, color) {
-    this.diagonal = 0;
-
-    this._rootNode = rootNode;
-
+    super(rootNode, color);
 
     // Clean root node, append canvas.
     while (rootNode.firstChild) {
@@ -225,14 +293,13 @@ class CanvasRenderer {
     // Device pixel ratio.
     this._DPR = 1;// window.devicePixelRatio;
 
-    this._currentColor;
     this.currentColor = color;
   }
 
   set currentColor(color) {
     this._currentColor = color;
 
-    this._rootNode.style.backgroundColor =
+    this.rootNode.style.backgroundColor =
         `rgb(${this._currentColor.background.r},
              ${this._currentColor.background.g},
              ${this._currentColor.background.b})`;
@@ -247,9 +314,6 @@ class CanvasRenderer {
     this._canvas.style.height = `${height}px`;
     this._canvas.setAttribute('width', `${width * this._DPR}px`);
     this._canvas.setAttribute('height', `${height * this._DPR}px`);
-
-    this.diagonal =
-        __WEBPACK_IMPORTED_MODULE_0__utils_js__["b" /* getDistance2d */](0, 0, this._canvas.width, this._canvas.height);
   }
 
   draw(points, waves) {
@@ -262,14 +326,14 @@ class CanvasRenderer {
     this._ctx.beginPath();
     points.forEach(p => {
       this._ctx.moveTo(p.displayX * this._DPR, p.displayY * this._DPR);
-      this._ctx.lineTo(__WEBPACK_IMPORTED_MODULE_0__utils_js__["c" /* bitwiseRound */]((p.displayX + p.size) * this._DPR),
-          __WEBPACK_IMPORTED_MODULE_0__utils_js__["c" /* bitwiseRound */](p.displayY * this._DPR));
-      this._ctx.lineTo(__WEBPACK_IMPORTED_MODULE_0__utils_js__["c" /* bitwiseRound */]((p.displayX + p.size) * this._DPR),
-          __WEBPACK_IMPORTED_MODULE_0__utils_js__["c" /* bitwiseRound */]((p.displayY + p.size) * this._DPR));
-      this._ctx.lineTo(__WEBPACK_IMPORTED_MODULE_0__utils_js__["c" /* bitwiseRound */](p.displayX  * this._DPR),
-          __WEBPACK_IMPORTED_MODULE_0__utils_js__["c" /* bitwiseRound */]((p.displayY + p.size) * this._DPR));
-      this._ctx.lineTo(__WEBPACK_IMPORTED_MODULE_0__utils_js__["c" /* bitwiseRound */](p.displayX * this._DPR),
-          __WEBPACK_IMPORTED_MODULE_0__utils_js__["c" /* bitwiseRound */](p.displayY * this._DPR));
+      this._ctx.lineTo(__WEBPACK_IMPORTED_MODULE_0__utils_js__["d" /* bitwiseRound */]((p.displayX + p.size) * this._DPR),
+          __WEBPACK_IMPORTED_MODULE_0__utils_js__["d" /* bitwiseRound */](p.displayY * this._DPR));
+      this._ctx.lineTo(__WEBPACK_IMPORTED_MODULE_0__utils_js__["d" /* bitwiseRound */]((p.displayX + p.size) * this._DPR),
+          __WEBPACK_IMPORTED_MODULE_0__utils_js__["d" /* bitwiseRound */]((p.displayY + p.size) * this._DPR));
+      this._ctx.lineTo(__WEBPACK_IMPORTED_MODULE_0__utils_js__["d" /* bitwiseRound */](p.displayX  * this._DPR),
+          __WEBPACK_IMPORTED_MODULE_0__utils_js__["d" /* bitwiseRound */]((p.displayY + p.size) * this._DPR));
+      this._ctx.lineTo(__WEBPACK_IMPORTED_MODULE_0__utils_js__["d" /* bitwiseRound */](p.displayX * this._DPR),
+          __WEBPACK_IMPORTED_MODULE_0__utils_js__["d" /* bitwiseRound */](p.displayY * this._DPR));
     });
     this._ctx.fill();
 
@@ -298,7 +362,7 @@ class CanvasRenderer {
 
 
 /***/ }),
-/* 3 */
+/* 4 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -307,15 +371,27 @@ class CanvasRenderer {
 
 
 
+/**
+ * A grid of points equally spaced, possibly displaced by waves.
+ *
+ * @export
+ * @class Grid
+ */
 class Grid {
-  constructor(gap, baseDotSize) {
+  /**
+   * Creates an instance of Grid.
+   * @param {number} gap Space (in px) between each point.
+   * @param {numberany} baseDotSize Size (in px) of each point.
+   * @param {number} [posConst=1/20] Affects how much a wave's crest can move a dot.
+   * @param {number} [sizeConst=3.5] Affects how much a wave's crest can scale a dot.
+   *
+   * @memberof Grid
+   */
+  constructor(gap, baseDotSize, posConst = 1 / 20, sizeConst = 3.5) {
     this.gap = gap;
     this.baseDotSize = baseDotSize;
-
-    // Constants that affect how much the position / size of each dot
-    // is affected by the distance from a wave.
-    this._posConst = 1/ 20;
-    this._sizeConst = 3.5;
+    this.posConst = posConst;
+    this.sizeConst = sizeConst
 
     this._distFromWaves = [];
     this._angleFromWaves = [];
@@ -326,6 +402,15 @@ class Grid {
     this.points = [];
   }
 
+  /**
+   * Called when the grid is resized. Re-computes the position of each point.
+   *
+   * @param {number} w New width of the grid.
+   * @param {number} h New height of the grid.
+   * @param {number} nWaves Number of waves currently active in the canvas.
+   *
+   * @memberof Grid
+   */
   resize(w, h, nWaves) {
     this.points = [];
     this._distFromWaves = [];
@@ -350,6 +435,13 @@ class Grid {
     }
   }
 
+  /**
+   * Updates position and size of each point based on the proximity to a wave.
+   *
+   * @param {Array<Wave>} waves
+   *
+   * @memberof Grid
+   */
   update(waves) {
     let distFromCrest, angle, percDist, easedPercDist;
 
@@ -368,10 +460,10 @@ class Grid {
           percDist = (wave.crestAOE - distFromCrest) / wave.crestAOE;
           easedPercDist = __WEBPACK_IMPORTED_MODULE_1__easing_js__["c" /* easeInOutQuad */](percDist) * wave.crestAOE;
 
-          p.displayX -= easedPercDist * this._posConst * Math.cos(angle);
-          p.displayY -= easedPercDist * this._posConst * Math.sin(angle);
+          p.displayX -= easedPercDist * this.posConst * Math.cos(angle);
+          p.displayY -= easedPercDist * this.posConst * Math.sin(angle);
 
-          p.size += this._sizeConst * __WEBPACK_IMPORTED_MODULE_1__easing_js__["d" /* easeInCubic */](1 - distFromCrest / wave.crestAOE);
+          p.size += this.sizeConst * __WEBPACK_IMPORTED_MODULE_1__easing_js__["d" /* easeInCubic */](1 - distFromCrest / wave.crestAOE);
         }
       });
 
@@ -380,27 +472,63 @@ class Grid {
     });
   }
 
+  /**
+   * Computes (and stores) the distance from a point and a wave's center.
+   *
+   * @param {number} pIndex Index of the point
+   * @param {Object} p Point object
+   * @param {number} wIndex Index of the wave
+   * @param {Wave} wave Wave object
+   * @returns {number} Disance from a point and a wave's center (in px).
+   *
+   * @memberof Grid
+   */
   _getDistFromWave(pIndex, p, wIndex, wave) {
     if (this._distFromWaves[pIndex][wIndex] === null) {
       this._distFromWaves[pIndex][wIndex] =
-          __WEBPACK_IMPORTED_MODULE_0__utils_js__["b" /* getDistance2d */](p.x, p.y, wave.x, wave.y);
+          __WEBPACK_IMPORTED_MODULE_0__utils_js__["a" /* getDistance2d */](p.x, p.y, wave.x, wave.y);
     }
     return this._distFromWaves[pIndex][wIndex];
   }
 
+    /**
+   * Computes (and stores) the angle from a point and a wave's center.
+   *
+   * @param {number} pIndex Index of the point
+   * @param {Object} p Point object
+   * @param {number} wIndex Index of the wave
+   * @param {Wave} wave Wave object
+   * @returns {number} Angle from a point and a wave's center (in radians).
+   *
+   * @memberof Grid
+   */
   _getAngleFromWave(pIndex, p, wIndex, wave) {
     if (this._angleFromWaves[pIndex][wIndex] === null) {
       this._angleFromWaves[pIndex][wIndex] =
-          __WEBPACK_IMPORTED_MODULE_0__utils_js__["d" /* getAngleBetweenPoints */](p.x, p.y, wave.x, wave.y);
+          __WEBPACK_IMPORTED_MODULE_0__utils_js__["c" /* getAngleBetweenPoints */](p.x, p.y, wave.x, wave.y);
     }
     return this._angleFromWaves[pIndex][wIndex];
   }
 
+  /**
+   * Adds an entry in the stored distances and angles. Needs to be called
+   * every time a wave is added to the scene, in order to keep values in sync.
+   *
+   * @memberof Grid
+   */
   addWave() {
     this._distFromWaves.forEach(d => {d.push(null);})
     this._angleFromWaves.forEach(d => {d.push(null);})
   }
 
+  /**
+   * Removes an entry from the stored distances and angles. Needs to be called
+   * every time a wave is removed from the scene, in order to keep values in sync.
+   *
+   * @param {number} index Index of the removed wave.
+   *
+   * @memberof Grid
+   */
   removeWave(index) {
     this._distFromWaves.forEach(d => {d.splice(index, 1);})
     this._angleFromWaves.forEach(d => {d.splice(index, 1);})
@@ -411,36 +539,38 @@ class Grid {
 
 
 /***/ }),
-/* 4 */
+/* 5 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__utils_js__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__easing_js__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__renderer_js__ = __webpack_require__(2);
 
 
 
-class SvgRenderer {
+
+const SVGns = 'http://www.w3.org/2000/svg';
+
+class SvgRenderer extends __WEBPACK_IMPORTED_MODULE_2__renderer_js__["a" /* default */] {
   constructor(rootNode, color) {
-    this.diagonal = 0;
+    super(rootNode, color);
+
     this._dots = [];
     this._ripples = [];
 
-    this._rootNode = rootNode;
-
     // Clean root node, append canvas.
-    while (this._rootNode.firstChild) {
-      this._rootNode.removeChild(this._rootNode.firstChild);
+    while (this.rootNode.firstChild) {
+      this.rootNode.removeChild(this.rootNode.firstChild);
     }
-    this._svg = document.createElementNS("http://www.w3.org/2000/svg", 'svg');
+    this._svg = document.createElementNS(SVGns, 'svg');
     this._svg.setAttributeNS(null, 'preserveAspectRatio', 'none');
-    this._dotsContainer = document.createElementNS("http://www.w3.org/2000/svg", 'g');
-    this._ripplesContainer = document.createElementNS("http://www.w3.org/2000/svg", 'g');
+    this._dotsContainer = document.createElementNS(SVGns, 'g');
+    this._ripplesContainer = document.createElementNS(SVGns, 'g');
     this._svg.appendChild(this._dotsContainer);
     this._svg.appendChild(this._ripplesContainer);
-    this._rootNode.appendChild(this._svg);
+    this.rootNode.appendChild(this._svg);
 
-    this._currentColor;
     this.currentColor = color;
   }
 
@@ -450,7 +580,7 @@ class SvgRenderer {
     this._svg.style.fill = `rgb(${this._currentColor.foreground.r},
                                 ${this._currentColor.foreground.g},
                                 ${this._currentColor.foreground.b})`;
-    this._rootNode.style.backgroundColor =
+    this.rootNode.style.backgroundColor =
         `rgb(${this._currentColor.background.r},
              ${this._currentColor.background.g},
              ${this._currentColor.background.b})`;
@@ -461,26 +591,20 @@ class SvgRenderer {
   }
 
   resize(width, height) {
-    this.diagonal = __WEBPACK_IMPORTED_MODULE_0__utils_js__["b" /* getDistance2d */](0, 0, width, height);
-
     this._svg.style.width = `${width}px`;
     this._svg.style.height = `${height}px`;
-
-    // Removing dots means they will be replaced during the next draw() call.
-    this._dots = [];
   }
 
   draw(points, waves) {
-    if (!this._dots.length) {
-      while (this._dotsContainer.firstChild) {
-        this._dotsContainer.removeChild(this._dotsContainer.firstChild);
-      }
-
-      this._dots = points.map(p => {
-        const r = this._createDot();
-        this._dotsContainer.appendChild(r);
-        return r;
-      })
+    // Recycle dots elements, or add only new dots only if necessary.
+    while (this._dots.length < points.length) {
+      const d = this._createDot();
+      this._dotsContainer.appendChild(d);
+      this._dots.push(d);
+    }
+    while (this._dots.length > points.length) {
+      this._dotsContainer.removeChild(this._dotsContainer.lastChild);
+      this._dots.pop();
     }
 
     points.forEach((p, i) => {
@@ -488,7 +612,7 @@ class SvgRenderer {
           `translate(${p.displayX}, ${p.displayY}) scale(${p.size})`);
     });
 
-    // Recicle ripple elements, or add only new ripples only if necessary.
+    // Recycle ripple elements, or add only new ripples only if necessary.
     while (this._ripples.length < waves.length) {
       const r = this._createRipple();
       this._ripplesContainer.appendChild(r);
@@ -500,7 +624,6 @@ class SvgRenderer {
     }
 
     // loop over waves -> ripples
-
     waves.forEach((wave, i) => {
       // Draw wave pulse. Opacity gets lower as the wave grows.
       const crestR = wave.getEasedCrestValue();
@@ -523,7 +646,7 @@ class SvgRenderer {
   }
 
   _createDot() {
-    const rect = document.createElementNS("http://www.w3.org/2000/svg", 'rect');
+    const rect = document.createElementNS(SVGns, 'rect');
     rect.setAttributeNS(null, 'x', 0);
     rect.setAttributeNS(null, 'y', 0);
     rect.setAttributeNS(null, 'width', 1);
@@ -532,7 +655,7 @@ class SvgRenderer {
   }
 
   _createRipple() {
-    const circle = document.createElementNS("http://www.w3.org/2000/svg", 'circle');
+    const circle = document.createElementNS(SVGns, 'circle');
     circle.setAttributeNS(null, 'cx', 0);
     circle.setAttributeNS(null, 'cy', 0);
     circle.setAttributeNS(null, 'r', 1);
@@ -544,13 +667,19 @@ class SvgRenderer {
 
 
 /***/ }),
-/* 5 */
+/* 6 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__utils_js__ = __webpack_require__(0);
 
 
+/**
+ * A wave, whose crest grows from its center and has a circular shape.
+ *
+ * @export
+ * @class Wave
+ */
 class Wave {
   /**
    * Creates an instance of Wave.
@@ -611,17 +740,17 @@ class Wave {
 
 
 /***/ }),
-/* 6 */
+/* 7 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__easing_js__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__utils_js__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wave_js__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__grid_js__ = __webpack_require__(3);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__canvas_renderer_js__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__svg_renderer_js__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wave_js__ = __webpack_require__(6);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__grid_js__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__canvas_renderer_js__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__svg_renderer_js__ = __webpack_require__(5);
 
 
 
@@ -651,12 +780,12 @@ const COLORS = {
 // Variables
 const root = document.getElementById('root');
 let currentColorPalette = COLOR_MODE_LIGHT;
-let renderer = new __WEBPACK_IMPORTED_MODULE_5__svg_renderer_js__["a" /* default */](root, COLORS[currentColorPalette]);
+let renderer = new __WEBPACK_IMPORTED_MODULE_4__canvas_renderer_js__["a" /* default */](root, COLORS[currentColorPalette]);
 const grid = new __WEBPACK_IMPORTED_MODULE_3__grid_js__["a" /* default */](GRID_GAP, GRID_DOT_SIZE);
-const sketchSize = {w: 0, h: 0};
+const sketchSize = {w: 0, h: 0, diagonal: 0};
 
 let options = {
-  renderer: 'svg'
+  renderer: 'canvas'
 };
 
 let waves = [];
@@ -666,18 +795,19 @@ let maxX, maxY;
 function onResize() {
   sketchSize.w = window.innerWidth;
   sketchSize.h = window.innerHeight;
+  sketchSize.diagonal = __WEBPACK_IMPORTED_MODULE_1__utils_js__["a" /* getDistance2d */](0, 0, sketchSize.w, sketchSize.h);
 
   renderer.resize(sketchSize.w, sketchSize.h);
   grid.resize(sketchSize.w, sketchSize.h, waves.length);
 }
 
 function onPointerUp(evt) {
-  maxX = __WEBPACK_IMPORTED_MODULE_1__utils_js__["a" /* absMax */](evt.clientX, evt.clientX - sketchSize.w);
-  maxY = __WEBPACK_IMPORTED_MODULE_1__utils_js__["a" /* absMax */](evt.clientY, evt.clientY - sketchSize.h);
+  maxX = __WEBPACK_IMPORTED_MODULE_1__utils_js__["b" /* absMax */](evt.clientX, evt.clientX - sketchSize.w);
+  maxY = __WEBPACK_IMPORTED_MODULE_1__utils_js__["b" /* absMax */](evt.clientY, evt.clientY - sketchSize.h);
 
   waves.push(new __WEBPACK_IMPORTED_MODULE_2__wave_js__["a" /* default */](evt.clientX, evt.clientY,
       Math.sqrt(maxX * maxX + maxY * maxY) + WAVE_CREST_DECAY,
-      renderer.diagonal + WAVE_CREST_DECAY, WAVE_CREST_VELOCITY, WAVE_CREST_DECAY,
+      sketchSize.diagonal + WAVE_CREST_DECAY, WAVE_CREST_VELOCITY, WAVE_CREST_DECAY,
       __WEBPACK_IMPORTED_MODULE_0__easing_js__["a" /* easeOutQuad */]));
 
   grid.addWave();
