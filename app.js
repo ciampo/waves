@@ -29,7 +29,7 @@ const root = document.getElementById('root');
 let currentColorPalette = COLOR_MODE_LIGHT;
 let renderer = new CanvasRenderer(root, COLORS[currentColorPalette]);
 const grid = new Grid(GRID_GAP, GRID_DOT_SIZE);
-const sketchSize = {w: 0, h: 0};
+const sketchSize = {w: 0, h: 0, diagonal: 0};
 
 let options = {
   renderer: 'canvas'
@@ -42,6 +42,7 @@ let maxX, maxY;
 function onResize() {
   sketchSize.w = window.innerWidth;
   sketchSize.h = window.innerHeight;
+  sketchSize.diagonal = utils.getDistance2d(0, 0, sketchSize.w, sketchSize.h);
 
   renderer.resize(sketchSize.w, sketchSize.h);
   grid.resize(sketchSize.w, sketchSize.h, waves.length);
@@ -53,7 +54,7 @@ function onPointerUp(evt) {
 
   waves.push(new Wave(evt.clientX, evt.clientY,
       Math.sqrt(maxX * maxX + maxY * maxY) + WAVE_CREST_DECAY,
-      renderer.diagonal + WAVE_CREST_DECAY, WAVE_CREST_VELOCITY, WAVE_CREST_DECAY,
+      sketchSize.diagonal + WAVE_CREST_DECAY, WAVE_CREST_VELOCITY, WAVE_CREST_DECAY,
       easing.easeOutQuad));
 
   grid.addWave();

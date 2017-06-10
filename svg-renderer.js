@@ -1,19 +1,19 @@
 import * as utils from './utils.js';
 import * as easing from './easing.js';
+import AbstractRenderer from './renderer.js';
 
 const SVGns = 'http://www.w3.org/2000/svg';
 
-export default class SvgRenderer {
+export default class SvgRenderer extends AbstractRenderer {
   constructor(rootNode, color) {
-    this.diagonal = 0;
+    super(rootNode, color);
+
     this._dots = [];
     this._ripples = [];
 
-    this._rootNode = rootNode;
-
     // Clean root node, append canvas.
-    while (this._rootNode.firstChild) {
-      this._rootNode.removeChild(this._rootNode.firstChild);
+    while (this.rootNode.firstChild) {
+      this.rootNode.removeChild(this.rootNode.firstChild);
     }
     this._svg = document.createElementNS(SVGns, 'svg');
     this._svg.setAttributeNS(null, 'preserveAspectRatio', 'none');
@@ -21,9 +21,8 @@ export default class SvgRenderer {
     this._ripplesContainer = document.createElementNS(SVGns, 'g');
     this._svg.appendChild(this._dotsContainer);
     this._svg.appendChild(this._ripplesContainer);
-    this._rootNode.appendChild(this._svg);
+    this.rootNode.appendChild(this._svg);
 
-    this._currentColor;
     this.currentColor = color;
   }
 
@@ -33,7 +32,7 @@ export default class SvgRenderer {
     this._svg.style.fill = `rgb(${this._currentColor.foreground.r},
                                 ${this._currentColor.foreground.g},
                                 ${this._currentColor.foreground.b})`;
-    this._rootNode.style.backgroundColor =
+    this.rootNode.style.backgroundColor =
         `rgb(${this._currentColor.background.r},
              ${this._currentColor.background.g},
              ${this._currentColor.background.b})`;
@@ -44,8 +43,6 @@ export default class SvgRenderer {
   }
 
   resize(width, height) {
-    this.diagonal = utils.getDistance2d(0, 0, width, height);
-
     this._svg.style.width = `${width}px`;
     this._svg.style.height = `${height}px`;
   }

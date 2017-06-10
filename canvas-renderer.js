@@ -1,12 +1,10 @@
 import * as utils from './utils.js';
 import * as easing from './easing.js';
+import AbstractRenderer from './renderer.js';
 
-export default class CanvasRenderer {
+export default class CanvasRenderer extends AbstractRenderer {
   constructor(rootNode, color) {
-    this.diagonal = 0;
-
-    this._rootNode = rootNode;
-
+    super(rootNode, color);
 
     // Clean root node, append canvas.
     while (rootNode.firstChild) {
@@ -19,14 +17,13 @@ export default class CanvasRenderer {
     // Device pixel ratio.
     this._DPR = 1;// window.devicePixelRatio;
 
-    this._currentColor;
     this.currentColor = color;
   }
 
   set currentColor(color) {
     this._currentColor = color;
 
-    this._rootNode.style.backgroundColor =
+    this.rootNode.style.backgroundColor =
         `rgb(${this._currentColor.background.r},
              ${this._currentColor.background.g},
              ${this._currentColor.background.b})`;
@@ -41,9 +38,6 @@ export default class CanvasRenderer {
     this._canvas.style.height = `${height}px`;
     this._canvas.setAttribute('width', `${width * this._DPR}px`);
     this._canvas.setAttribute('height', `${height * this._DPR}px`);
-
-    this.diagonal =
-        utils.getDistance2d(0, 0, this._canvas.width, this._canvas.height);
   }
 
   draw(points, waves) {
