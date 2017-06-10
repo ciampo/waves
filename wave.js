@@ -1,5 +1,11 @@
 import * as utils from './utils.js';
 
+/**
+ * A wave, whose crest grows from its center and has a circular shape.
+ *
+ * @export
+ * @class Wave
+ */
 export default class Wave {
   /**
    * Creates an instance of Wave.
