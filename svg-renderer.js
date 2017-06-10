@@ -48,22 +48,18 @@ export default class SvgRenderer {
 
     this._svg.style.width = `${width}px`;
     this._svg.style.height = `${height}px`;
-
-    // Removing dots means they will be replaced during the next draw() call.
-    this._dots = [];
   }
 
   draw(points, waves) {
-    if (!this._dots.length) {
-      while (this._dotsContainer.firstChild) {
-        this._dotsContainer.removeChild(this._dotsContainer.firstChild);
-      }
-
-      this._dots = points.map(p => {
-        const r = this._createDot();
-        this._dotsContainer.appendChild(r);
-        return r;
-      })
+    // Recycle dots elements, or add only new dots only if necessary.
+    while (this._dots.length < points.length) {
+      const d = this._createDot();
+      this._dotsContainer.appendChild(d);
+      this._dots.push(d);
+    }
+    while (this._dots.length > points.length) {
+      this._dotsContainer.removeChild(this._dotsContainer.lastChild);
+      this._dots.pop();
     }
 
     points.forEach((p, i) => {
@@ -71,7 +67,7 @@ export default class SvgRenderer {
           `translate(${p.displayX}, ${p.displayY}) scale(${p.size})`);
     });
 
-    // Recicle ripple elements, or add only new ripples only if necessary.
+    // Recycle ripple elements, or add only new ripples only if necessary.
     while (this._ripples.length < waves.length) {
       const r = this._createRipple();
       this._ripplesContainer.appendChild(r);
@@ -83,7 +79,6 @@ export default class SvgRenderer {
     }
 
     // loop over waves -> ripples
-
     waves.forEach((wave, i) => {
       // Draw wave pulse. Opacity gets lower as the wave grows.
       const crestR = wave.getEasedCrestValue();
