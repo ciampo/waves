@@ -63,7 +63,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 7);
+/******/ 	return __webpack_require__(__webpack_require__.s = 4);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -123,11 +123,11 @@ function bitwiseRound(n) {
 /* unused harmony export linear */
 /* unused harmony export easeInQuad */
 /* harmony export (immutable) */ __webpack_exports__["a"] = easeOutQuad;
-/* harmony export (immutable) */ __webpack_exports__["c"] = easeInOutQuad;
-/* harmony export (immutable) */ __webpack_exports__["d"] = easeInCubic;
+/* harmony export (immutable) */ __webpack_exports__["b"] = easeInOutQuad;
+/* harmony export (immutable) */ __webpack_exports__["c"] = easeInCubic;
 /* unused harmony export easeOutCubic */
 /* unused harmony export easeInOutCubic */
-/* harmony export (immutable) */ __webpack_exports__["b"] = easeInQuart;
+/* harmony export (immutable) */ __webpack_exports__["d"] = easeInQuart;
 /* unused harmony export easeOutQuart */
 /* unused harmony export easeInOutQuart */
 /* unused harmony export easeInQuint */
@@ -271,6 +271,240 @@ class AbstractRenderer {
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__easing_js__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__utils_js__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wave_js__ = __webpack_require__(8);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__grid_js__ = __webpack_require__(6);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__canvas_renderer_js__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__svg_renderer_js__ = __webpack_require__(7);
+
+
+
+
+
+
+
+class Sketch {
+
+  static get RendererTypeCanvas() {
+    return 'canvas';
+  }
+
+  static get RendererTypeSvg() {
+    return 'svg';
+  }
+
+  static get RendererTypes() {
+    return [
+      Sketch.RendererTypeCanvas,
+      Sketch.RendererTypeSvg
+    ];
+  }
+
+  static get ColorModeDark() {
+    return 'dark';
+  }
+
+  static get ColorModeLight() {
+    return 'light';
+  }
+
+  static get ColorModes() {
+    return [
+      Sketch.ColorModeDark,
+      Sketch.ColorModeLight
+    ];
+  }
+
+  static getRenderer(rendererType, ...rendererArgs) {
+    switch(rendererType) {
+      case Sketch.RendererTypeCanvas:
+        return new __WEBPACK_IMPORTED_MODULE_4__canvas_renderer_js__["a" /* default */](...rendererArgs);
+      case Sketch.RendererTypeSvg:
+        return new __WEBPACK_IMPORTED_MODULE_5__svg_renderer_js__["a" /* default */](...rendererArgs);
+    }
+  }
+
+  static get DefaultOptions() {
+    return {
+      gridGap: 40,
+      gridDotSize: 2,
+      waveCrestVelocity: 12,
+      waveCrestDecay: 400,
+      colorModes: {
+        [Sketch.ColorModeDark]: {
+          background: {r: 40, g: 40, b: 40, waveMaxOpacity: 0.02},
+          foreground: {r: 255, g: 255, b: 255, waveMaxOpacity: 0.02}
+        },
+        [Sketch.ColorModeLight]: {
+          background: {r: 240, g: 240, b: 240, waveMaxOpacity: 0.02},
+          foreground: {r: 40, g: 40, b: 40, waveMaxOpacity: 0.02}
+        }
+      },
+      currentColorMode: Sketch.ColorModeDark,
+      rendererType: Sketch.RendererTypes[0]
+    };
+  }
+
+  constructor(rootEl, options = {}) {
+    // From arguments
+    this._root = rootEl;
+    this.options = Object.assign({}, Sketch.DefaultOptions, options);
+
+    // Public attributs
+    this.sketchSize = {w: 0, h: 0, diagonal: 0};
+    this.grid = new __WEBPACK_IMPORTED_MODULE_3__grid_js__["a" /* default */](this.options.gridGap, this.options.gridDotSize);
+    this.waves = [];
+
+    // Private attributes.
+    this._drawing = false;
+
+    // Binding functions.
+    this.onResize = this.onResize.bind(this);
+    this.onPointerUp = this.onPointerUp.bind(this);
+    this.drawFrame = this.drawFrame.bind(this);
+
+    this._root.addEventListener('pointerup', this.onPointerUp, false);
+
+
+    this._colorMode = this.options.currentColorMode;
+    // Triggers the creation of a new renderer.
+    this.rendererType = this.options.rendererType;
+  }
+
+  set rendererType(r) {
+    this._rendererType = r;
+
+    this.renderer = Sketch.getRenderer(this._rendererType,
+        this._root, this.options.colorModes[this._colorMode]);
+    this.onResize();
+  }
+
+  get rendererType() {
+    return this._rendererType;
+  }
+
+  set colorMode(c) {
+    this._colorMode = c;
+
+    this.renderer && (this.renderer.currentColor =
+        this.options.colorModes[this._colorMode]);
+  }
+
+  get colorMode() {
+    return this._colorMode;
+  }
+
+  startDrawing() {
+    this._drawing = true;
+    requestAnimationFrame(this.drawFrame);
+  }
+
+  stopDrawing() {
+    this._drawing = false;
+  }
+
+  switchColorMode() {
+    this.colorMode =
+        this._colorMode === Sketch.ColorModeDark ?
+        Sketch.ColorModeLight : Sketch.ColorModeDark;
+  }
+
+  onResize() {
+    // Update sketch sizes
+    this.sketchSize.w = window.innerWidth;
+    this.sketchSize.h = window.innerHeight;
+    this.sketchSize.diagonal =
+        __WEBPACK_IMPORTED_MODULE_1__utils_js__["a" /* getDistance2d */](0, 0, this.sketchSize.w, this.sketchSize.h);
+
+    // Update grid and renderer.
+    this.grid.resize(this.sketchSize.w, this.sketchSize.h, this.waves.length);
+    this.renderer.resize(this.sketchSize.w, this.sketchSize.h);
+  }
+
+  onPointerUp(evt) {
+    const maxX = __WEBPACK_IMPORTED_MODULE_1__utils_js__["b" /* absMax */](evt.clientX, evt.clientX - this.sketchSize.w);
+    const maxY = __WEBPACK_IMPORTED_MODULE_1__utils_js__["b" /* absMax */](evt.clientY, evt.clientY - this.sketchSize.h);
+
+    this.waves.push(new __WEBPACK_IMPORTED_MODULE_2__wave_js__["a" /* default */](evt.clientX, evt.clientY,
+        Math.sqrt(maxX * maxX + maxY * maxY) + this.options.waveCrestDecay,
+        this.sketchSize.diagonal + this.options.waveCrestDecay,
+        this.options.waveCrestVelocity,
+        this.options.waveCrestDecay,
+        __WEBPACK_IMPORTED_MODULE_0__easing_js__["a" /* easeOutQuad */]));
+
+    this.grid.addWave();
+  }
+
+  drawFrame() {
+    if (this._drawing) {
+      requestAnimationFrame(this.drawFrame);
+    }
+
+    this.grid.update(this.waves);
+    this.renderer.draw(this.grid.points, this.waves);
+
+    // Grow wave, remove if expired.
+    this.waves.forEach((wave, wIndex) => {
+      wave.grow();
+      if (wave.isExpired()) {
+        this.waves.splice(wIndex, 1);
+        this.grid.removeWave(wIndex);
+      }
+    });
+  }
+
+}
+/* harmony export (immutable) */ __webpack_exports__["a"] = Sketch;
+;
+
+/***/ }),
+/* 4 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__sketch_js__ = __webpack_require__(3);
+
+
+let sketch;
+let datGui;
+
+function onKeyDown(evt) {
+  // 'c' key pressed.
+  if (evt.keyCode === 67) {
+    sketch.switchColorMode();
+  }
+}
+
+// Draw entry point
+function start() {
+  // Start sketch.
+  sketch = new __WEBPACK_IMPORTED_MODULE_0__sketch_js__["a" /* default */](document.getElementById('root'), {
+    gridDotSize: 1,
+    currentColorMode: __WEBPACK_IMPORTED_MODULE_0__sketch_js__["a" /* default */].ColorModeLight
+  });
+  sketch.startDrawing();
+
+  // Event listeners.
+  window.addEventListener('resize', _ => {sketch.onResize()}, false);
+  document.addEventListener('keydown', onKeyDown, false);
+
+  // dat.gui
+  datGui = new dat.GUI();
+  datGui.add(sketch, 'rendererType', __WEBPACK_IMPORTED_MODULE_0__sketch_js__["a" /* default */].RendererTypes);
+  datGui.add(sketch, 'colorMode', __WEBPACK_IMPORTED_MODULE_0__sketch_js__["a" /* default */].ColorModes);
+}
+
+// Start sketch
+start();
+
+
+/***/ }),
+/* 5 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__utils_js__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__easing_js__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__renderer_js__ = __webpack_require__(2);
@@ -348,7 +582,7 @@ class CanvasRenderer extends __WEBPACK_IMPORTED_MODULE_2__renderer_js__["a" /* d
                 ${this._currentColor.foreground.g},
                 ${this._currentColor.foreground.b},
                 ${this._currentColor.foreground.waveMaxOpacity *
-                    __WEBPACK_IMPORTED_MODULE_1__easing_js__["b" /* easeInQuart */](1 - normalisedHalfCrest)})`;
+                    __WEBPACK_IMPORTED_MODULE_1__easing_js__["d" /* easeInQuart */](1 - normalisedHalfCrest)})`;
 
         this._ctx.beginPath();
         this._ctx.arc(wave.x * this._DPR, wave.y * this._DPR, crestR * this._DPR, 0, Math.PI * 2, true);
@@ -362,7 +596,7 @@ class CanvasRenderer extends __WEBPACK_IMPORTED_MODULE_2__renderer_js__["a" /* d
 
 
 /***/ }),
-/* 4 */
+/* 6 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -458,12 +692,12 @@ class Grid {
         if (distFromCrest <= wave.crestAOE) {
           angle = this._getAngleFromWave(pIndex, p, wIndex, wave);
           percDist = (wave.crestAOE - distFromCrest) / wave.crestAOE;
-          easedPercDist = __WEBPACK_IMPORTED_MODULE_1__easing_js__["c" /* easeInOutQuad */](percDist) * wave.crestAOE;
+          easedPercDist = __WEBPACK_IMPORTED_MODULE_1__easing_js__["b" /* easeInOutQuad */](percDist) * wave.crestAOE;
 
           p.displayX -= easedPercDist * this.posConst * Math.cos(angle);
           p.displayY -= easedPercDist * this.posConst * Math.sin(angle);
 
-          p.size += this.sizeConst * __WEBPACK_IMPORTED_MODULE_1__easing_js__["d" /* easeInCubic */](1 - distFromCrest / wave.crestAOE);
+          p.size += this.sizeConst * __WEBPACK_IMPORTED_MODULE_1__easing_js__["c" /* easeInCubic */](1 - distFromCrest / wave.crestAOE);
         }
       });
 
@@ -539,7 +773,7 @@ class Grid {
 
 
 /***/ }),
-/* 5 */
+/* 7 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -635,7 +869,7 @@ class SvgRenderer extends __WEBPACK_IMPORTED_MODULE_2__renderer_js__["a" /* defa
             ${this._currentColor.foreground.g},
             ${this._currentColor.foreground.b},
             ${this._currentColor.foreground.waveMaxOpacity *
-                __WEBPACK_IMPORTED_MODULE_1__easing_js__["b" /* easeInQuart */](1 - normalisedHalfCrest)})`;
+                __WEBPACK_IMPORTED_MODULE_1__easing_js__["d" /* easeInQuart */](1 - normalisedHalfCrest)})`;
 
         ripple.setAttribute('transform',
             `translate(${wave.x}, ${wave.y}) scale(${crestR})`);
@@ -667,7 +901,7 @@ class SvgRenderer extends __WEBPACK_IMPORTED_MODULE_2__renderer_js__["a" /* defa
 
 
 /***/ }),
-/* 6 */
+/* 8 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -737,137 +971,6 @@ class Wave {
   }
 }
 /* harmony export (immutable) */ __webpack_exports__["a"] = Wave;
-
-
-/***/ }),
-/* 7 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__easing_js__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__utils_js__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wave_js__ = __webpack_require__(6);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__grid_js__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__canvas_renderer_js__ = __webpack_require__(3);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__svg_renderer_js__ = __webpack_require__(5);
-
-
-
-
-
-
-
-// Constants
-// it may as well be always 1 as everything is squar-y
-const GRID_GAP = 40;
-const GRID_DOT_SIZE = 2;
-const WAVE_CREST_VELOCITY = 12;
-const WAVE_CREST_DECAY = 400;
-const COLOR_MODE_DARK = 'dark';
-const COLOR_MODE_LIGHT = 'light';
-const COLORS = {
-  [COLOR_MODE_DARK]: {
-    background: {r: 40, g: 40, b: 40, waveMaxOpacity: 0.02},
-    foreground: {r: 255, g: 255, b: 255, waveMaxOpacity: 0.02}
-  },
-  [COLOR_MODE_LIGHT]: {
-    background: {r: 240, g: 240, b: 240, waveMaxOpacity: 0.02},
-    foreground: {r: 40, g: 40, b: 40, waveMaxOpacity: 0.02}
-  }
-};
-
-// Variables
-const root = document.getElementById('root');
-let currentColorPalette = COLOR_MODE_LIGHT;
-let renderer = new __WEBPACK_IMPORTED_MODULE_4__canvas_renderer_js__["a" /* default */](root, COLORS[currentColorPalette]);
-const grid = new __WEBPACK_IMPORTED_MODULE_3__grid_js__["a" /* default */](GRID_GAP, GRID_DOT_SIZE);
-const sketchSize = {w: 0, h: 0, diagonal: 0};
-
-let options = {
-  renderer: 'canvas'
-};
-
-let waves = [];
-
-let maxX, maxY;
-
-function onResize() {
-  sketchSize.w = window.innerWidth;
-  sketchSize.h = window.innerHeight;
-  sketchSize.diagonal = __WEBPACK_IMPORTED_MODULE_1__utils_js__["a" /* getDistance2d */](0, 0, sketchSize.w, sketchSize.h);
-
-  renderer.resize(sketchSize.w, sketchSize.h);
-  grid.resize(sketchSize.w, sketchSize.h, waves.length);
-}
-
-function onPointerUp(evt) {
-  maxX = __WEBPACK_IMPORTED_MODULE_1__utils_js__["b" /* absMax */](evt.clientX, evt.clientX - sketchSize.w);
-  maxY = __WEBPACK_IMPORTED_MODULE_1__utils_js__["b" /* absMax */](evt.clientY, evt.clientY - sketchSize.h);
-
-  waves.push(new __WEBPACK_IMPORTED_MODULE_2__wave_js__["a" /* default */](evt.clientX, evt.clientY,
-      Math.sqrt(maxX * maxX + maxY * maxY) + WAVE_CREST_DECAY,
-      sketchSize.diagonal + WAVE_CREST_DECAY, WAVE_CREST_VELOCITY, WAVE_CREST_DECAY,
-      __WEBPACK_IMPORTED_MODULE_0__easing_js__["a" /* easeOutQuad */]));
-
-  grid.addWave();
-}
-
-function onKeyDown(evt) {
-  // 'c' key pressed.
-  if (evt.keyCode === 67) {
-    currentColorPalette = currentColorPalette === COLOR_MODE_LIGHT ?
-        COLOR_MODE_DARK : COLOR_MODE_LIGHT;
-    renderer.currentColor = COLORS[currentColorPalette];
-  }
-}
-
-// Draw entry point (rendering loop).
-function draw(ts) {
-  requestAnimationFrame(draw);
-
-  grid.update(waves);
-  renderer.draw(grid.points, waves);
-
-  // Grow wave, remove if expired.
-  waves.forEach((wave, wIndex) => {
-    wave.grow();
-    if (wave.isExpired()) {
-      waves.splice(wIndex, 1);
-      grid.removeWave(wIndex);
-    }
-  });
-}
-
-// Draw entry point
-function start() {
-  const gui = new dat.GUI();
-  var controller = gui.add(options, 'renderer', ['canvas', 'svg']);
-
-  controller.onFinishChange(function(value) {
-    switch(value) {
-      case 'svg':
-        renderer = new __WEBPACK_IMPORTED_MODULE_5__svg_renderer_js__["a" /* default */](root, COLORS[currentColorPalette]);
-        onResize();
-        break;
-      case 'canvas':
-        renderer = new __WEBPACK_IMPORTED_MODULE_4__canvas_renderer_js__["a" /* default */](root, COLORS[currentColorPalette]);
-        onResize();
-        break;
-    }
-  });
-
-  onResize();
-  requestAnimationFrame(draw);
-}
-
-// Event listeners
-window.addEventListener('resize', onResize, false);
-root.addEventListener('pointerup', onPointerUp, false);
-document.addEventListener('keydown', onKeyDown, false);
-
-// Start sketch
-start();
 
 
 /***/ })
