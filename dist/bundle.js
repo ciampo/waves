@@ -576,13 +576,15 @@ class CanvasRenderer extends __WEBPACK_IMPORTED_MODULE_2__renderer_js__["a" /* d
       const crestR = wave.getEasedCrestValue();
       const normalisedHalfCrest = crestR / (wave.easingRadius / 2);
 
-      if (normalisedHalfCrest <= 1) {
+      if (normalisedHalfCrest < 1) {
+        // Using toFixed() prevents bug in Safari where the ripple
+        // would flash just before being removed.
         this._ctx.fillStyle =
           `rgba(${this._currentColor.foreground.r},
                 ${this._currentColor.foreground.g},
                 ${this._currentColor.foreground.b},
-                ${this._currentColor.foreground.waveMaxOpacity *
-                    __WEBPACK_IMPORTED_MODULE_1__easing_js__["d" /* easeInQuart */](1 - normalisedHalfCrest)})`;
+                ${(this._currentColor.foreground.waveMaxOpacity *
+                    __WEBPACK_IMPORTED_MODULE_1__easing_js__["d" /* easeInQuart */](1 - normalisedHalfCrest)).toFixed(3)})`;
 
         this._ctx.beginPath();
         this._ctx.arc(wave.x * this._DPR, wave.y * this._DPR, crestR * this._DPR, 0, Math.PI * 2, true);
