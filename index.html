@@ -20,6 +20,29 @@
 <body >
   <div id="root" touch-action="none"></div>
 
+  <script>
+    // Safari 10.1 nomodule fix.
+    (function() {
+      var check = document.createElement('script');
+      if (!('noModule' in check) && 'onbeforeload' in check) {
+        var support = false;
+        document.addEventListener('beforeload', function(e) {
+          if (e.target === check) {
+            support = true;
+          } else if (!e.target.hasAttribute('nomodule') || !support) {
+            return;
+          }
+          e.preventDefault();
+        }, true);
+
+        check.type = 'module';
+        check.src = '.';
+        document.head.appendChild(check);
+        check.remove();
+      }
+    }());
+  </script>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.6.5/dat.gui.min.js"></script>
   <script src="https://code.jquery.com/pep/0.4.3/pep.js"></script>
   <script type="module" src="./app.js"></script>
