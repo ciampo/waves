@@ -15,6 +15,21 @@ export default class AbstractRenderer {
     if (this.draw === AbstractRenderer.prototype.draw) {
       throw new TypeError('Please implement abstract method "draw".');
     }
+    if (this.draw === AbstractRenderer.prototype.draw) {
+      throw new TypeError('Please implement abstract method "draw".');
+    }
+  }
+
+  /**
+   * A string indicating the RendererType.
+   *
+   * @readonly
+   * @static
+   *
+   * @memberof AbstractRenderer
+   */
+  static get RendererType() {
+    throw new TypeError('Please implement abstract static getter for RendererType');
   }
 
   /**

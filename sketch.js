@@ -4,21 +4,14 @@ import Wave from './wave.js';
 import Grid from './grid.js';
 import CanvasRenderer from './canvas-renderer.js';
 import SvgRenderer from './svg-renderer.js';
+import DomRenderer from './dom-renderer.js';
 
 export default class Sketch {
 
-  static get RendererTypeCanvas() {
-    return 'canvas';
-  }
-
-  static get RendererTypeSvg() {
-    return 'svg';
-  }
-
   static get RendererTypes() {
     return [
-      Sketch.RendererTypeCanvas,
-      Sketch.RendererTypeSvg
+      CanvasRenderer.RendererType,
+      SvgRenderer.RendererType
     ];
   }
 
@@ -39,9 +32,9 @@ export default class Sketch {
 
   static getRenderer(rendererType, ...rendererArgs) {
     switch(rendererType) {
-      case Sketch.RendererTypeCanvas:
+      case CanvasRenderer.RendererType:
         return new CanvasRenderer(...rendererArgs);
-      case Sketch.RendererTypeSvg:
+      case SvgRenderer.RendererType:
         return new SvgRenderer(...rendererArgs);
     }
   }

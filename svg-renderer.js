@@ -26,6 +26,10 @@ export default class SvgRenderer extends AbstractRenderer {
     this.currentColor = color;
   }
 
+  static get RendererType() {
+    return 'svg';
+  }
+
   set currentColor(color) {
     this._currentColor = color;
 

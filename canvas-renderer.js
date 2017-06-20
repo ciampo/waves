@@ -20,6 +20,10 @@ export default class CanvasRenderer extends AbstractRenderer {
     this.currentColor = color;
   }
 
+  static get RendererType() {
+    return 'canvas';
+  }
+
   set currentColor(color) {
     this._currentColor = color;
 
