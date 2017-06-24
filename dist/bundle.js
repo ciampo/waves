@@ -341,6 +341,7 @@ class Sketch {
     return {
       gridGap: 40,
       gridDotSize: 2,
+      gridMaxDotSize: 16,
       waveCrestVelocity: 12,
       waveCrestDecay: 400,
       colorModes: {
@@ -365,7 +366,8 @@ class Sketch {
 
     // Public attributs
     this.sketchSize = {w: 0, h: 0, diagonal: 0};
-    this.grid = new __WEBPACK_IMPORTED_MODULE_3__grid_js__["a" /* default */](this.options.gridGap, this.options.gridDotSize);
+    this.grid = new __WEBPACK_IMPORTED_MODULE_3__grid_js__["a" /* default */](this.options.gridGap, this.options.gridDotSize,
+        this.options.gridMaxDotSize);
     this.waves = [];
 
     // Private attributes.
@@ -769,15 +771,17 @@ class Grid {
   /**
    * Creates an instance of Grid.
    * @param {number} gap Space (in px) between each point.
-   * @param {numberany} baseDotSize Size (in px) of each point.
+   * @param {number} baseDotSize Size (in px) of each point when idle.
+   * @param {number} maxDotSize Max size (in px) that each point can grow to.
    * @param {number} [posConst=1/20] Affects how much a wave's crest can move a dot.
    * @param {number} [sizeConst=3.5] Affects how much a wave's crest can scale a dot.
    *
    * @memberof Grid
    */
-  constructor(gap, baseDotSize, posConst = 1 / 20, sizeConst = 3.5) {
+  constructor(gap, baseDotSize, maxDotSize, posConst = 1/20, sizeConst = 3.5) {
     this.gap = gap;
     this.baseDotSize = baseDotSize;
+    this.maxDotSize = maxDotSize;
     this.posConst = posConst;
     this.sizeConst = sizeConst
 
@@ -854,6 +858,8 @@ class Grid {
           p.size += this.sizeConst * __WEBPACK_IMPORTED_MODULE_1__easing_js__["c" /* easeInCubic */](1 - distFromCrest / wave.crestAOE);
         }
       });
+
+      p.size = Math.min(p.size, this.maxDotSize);
 
       p.displayX -= p.size / 2;
       p.displayY -= p.size / 2;
