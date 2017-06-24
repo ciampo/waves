@@ -11,7 +11,8 @@ export default class Sketch {
   static get RendererTypes() {
     return [
       CanvasRenderer.RendererType,
-      SvgRenderer.RendererType
+      SvgRenderer.RendererType,
+      DomRenderer.RendererType
     ];
   }
 
@@ -36,6 +37,8 @@ export default class Sketch {
         return new CanvasRenderer(...rendererArgs);
       case SvgRenderer.RendererType:
         return new SvgRenderer(...rendererArgs);
+      case DomRenderer.RendererType:
+        return new DomRenderer(...rendererArgs);
     }
   }
 
