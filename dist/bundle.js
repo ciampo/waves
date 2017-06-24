@@ -219,6 +219,21 @@ class AbstractRenderer {
     if (this.draw === AbstractRenderer.prototype.draw) {
       throw new TypeError('Please implement abstract method "draw".');
     }
+    if (this.draw === AbstractRenderer.prototype.draw) {
+      throw new TypeError('Please implement abstract method "draw".');
+    }
+  }
+
+  /**
+   * A string indicating the RendererType.
+   *
+   * @readonly
+   * @static
+   *
+   * @memberof AbstractRenderer
+   */
+  static get RendererType() {
+    throw new TypeError('Please implement abstract static getter for RendererType');
   }
 
   /**
@@ -273,10 +288,12 @@ class AbstractRenderer {
 "use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__easing_js__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__utils_js__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wave_js__ = __webpack_require__(8);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__grid_js__ = __webpack_require__(6);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__wave_js__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__grid_js__ = __webpack_require__(7);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__canvas_renderer_js__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__svg_renderer_js__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__svg_renderer_js__ = __webpack_require__(8);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__dom_renderer_js__ = __webpack_require__(6);
+
 
 
 
@@ -286,18 +303,11 @@ class AbstractRenderer {
 
 class Sketch {
 
-  static get RendererTypeCanvas() {
-    return 'canvas';
-  }
-
-  static get RendererTypeSvg() {
-    return 'svg';
-  }
-
   static get RendererTypes() {
     return [
-      Sketch.RendererTypeCanvas,
-      Sketch.RendererTypeSvg
+      __WEBPACK_IMPORTED_MODULE_4__canvas_renderer_js__["a" /* default */].RendererType,
+      __WEBPACK_IMPORTED_MODULE_5__svg_renderer_js__["a" /* default */].RendererType,
+      __WEBPACK_IMPORTED_MODULE_6__dom_renderer_js__["a" /* default */].RendererType
     ];
   }
 
@@ -318,10 +328,12 @@ class Sketch {
 
   static getRenderer(rendererType, ...rendererArgs) {
     switch(rendererType) {
-      case Sketch.RendererTypeCanvas:
+      case __WEBPACK_IMPORTED_MODULE_4__canvas_renderer_js__["a" /* default */].RendererType:
         return new __WEBPACK_IMPORTED_MODULE_4__canvas_renderer_js__["a" /* default */](...rendererArgs);
-      case Sketch.RendererTypeSvg:
+      case __WEBPACK_IMPORTED_MODULE_5__svg_renderer_js__["a" /* default */].RendererType:
         return new __WEBPACK_IMPORTED_MODULE_5__svg_renderer_js__["a" /* default */](...rendererArgs);
+      case __WEBPACK_IMPORTED_MODULE_6__dom_renderer_js__["a" /* default */].RendererType:
+        return new __WEBPACK_IMPORTED_MODULE_6__dom_renderer_js__["a" /* default */](...rendererArgs);
     }
   }
 
@@ -530,6 +542,10 @@ class CanvasRenderer extends __WEBPACK_IMPORTED_MODULE_2__renderer_js__["a" /* d
     this.currentColor = color;
   }
 
+  static get RendererType() {
+    return 'canvas';
+  }
+
   set currentColor(color) {
     this._currentColor = color;
 
@@ -599,6 +615,142 @@ class CanvasRenderer extends __WEBPACK_IMPORTED_MODULE_2__renderer_js__["a" /* d
 
 /***/ }),
 /* 6 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__utils_js__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__easing_js__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__renderer_js__ = __webpack_require__(2);
+
+
+
+
+const SVGns = 'http://www.w3.org/2000/svg';
+
+class DomRenderer extends __WEBPACK_IMPORTED_MODULE_2__renderer_js__["a" /* default */] {
+  constructor(rootNode, color) {
+    super(rootNode, color);
+
+    this._dots = [];
+    this._ripples = [];
+
+    // Clean root node, append canvas.
+    while (this.rootNode.firstChild) {
+      this.rootNode.removeChild(this.rootNode.firstChild);
+    }
+    this._container = document.createElement('div');
+    this.rootNode.appendChild(this._container);
+
+    this.currentColor = color;
+  }
+
+  static get RendererType() {
+    return 'dom';
+  }
+
+  set currentColor(color) {
+    this._currentColor = color;
+
+    // Will affect dots color (through the 'currentColor' value).
+    this._container.style.color = `rgb(${this._currentColor.foreground.r},
+                                       ${this._currentColor.foreground.g},
+                                       ${this._currentColor.foreground.b})`;
+    this.rootNode.style.backgroundColor =
+        `rgb(${this._currentColor.background.r},
+             ${this._currentColor.background.g},
+             ${this._currentColor.background.b})`;
+  }
+
+  get currentColor() {
+    return this._currentColor;
+  }
+
+  resize(width, height) {
+    this._container.style.width = `${width}px`;
+    this._container.style.height = `${height}px`;
+  }
+
+  draw(points, waves) {
+    // Recycle dots elements, or add only new dots only if necessary.
+    let d;
+    while (this._dots.length < points.length) {
+      d = this._createDot();
+      this._container.appendChild(d);
+      this._dots.push(d);
+    }
+    while (this._dots.length > points.length) {
+      this._container.removeChild(this._container.lastChild);
+      this._dots.pop();
+    }
+
+    // Transform dots.
+    points.forEach((p, i) => {
+      this._dots[i].style.transform =
+          `translate(${p.displayX}px, ${p.displayY}px) scale(${p.size})`;
+    });
+
+    // Recycle ripple elements, or add only new ripples only if necessary.
+    let r;
+    while (this._ripples.length < waves.length) {
+      r = this._createRipple();
+      this._container.appendChild(r);
+      this._ripples.push(r);
+    }
+    while (this._ripples.length > waves.length) {
+      this._container.removeChild(this._container.lastChild);
+      this._ripples.pop();
+    }
+
+    // loop over waves -> ripples
+    let crestR, normalisedHalfCrest;
+    waves.forEach((wave, i) => {
+      // Draw wave pulse. Opacity gets lower as the wave grows.
+      crestR = wave.getEasedCrestValue();
+      normalisedHalfCrest = crestR / (wave.easingRadius / 2);
+
+      if (normalisedHalfCrest <= 1) {
+        this._ripples[i].style.opacity =
+            this._currentColor.foreground.waveMaxOpacity *
+                __WEBPACK_IMPORTED_MODULE_1__easing_js__["d" /* easeInQuart */](1 - normalisedHalfCrest);
+
+        this._ripples[i].style.transform =
+            `translate(${wave.x}px, ${wave.y}px) scale(${crestR})`;
+      } else {
+        this._ripples[i].style.transform = 'scale(0)';
+      }
+    });
+  }
+
+  _createDot() {
+    const rect = this._createShape();
+    rect.style.willChange = 'transform';
+    return rect;
+  }
+
+  _createRipple() {
+    const circle = this._createShape();
+    circle.style.willChange = 'transform, opacity';
+    circle.style.borderRadius = '50%';
+    return circle;
+  }
+
+  _createShape() {
+    const shape = document.createElement('div');
+    shape.style.position = 'absolute';
+    shape.style.top = '0';
+    shape.style.left = '0';
+    shape.style.width = '1px';
+    shape.style.height = '1px';
+    shape.style.backgroundColor = 'currentColor';
+    return shape;
+  }
+}
+/* harmony export (immutable) */ __webpack_exports__["a"] = DomRenderer;
+
+
+
+/***/ }),
+/* 7 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -775,7 +927,7 @@ class Grid {
 
 
 /***/ }),
-/* 7 */
+/* 8 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -801,13 +953,13 @@ class SvgRenderer extends __WEBPACK_IMPORTED_MODULE_2__renderer_js__["a" /* defa
     }
     this._svg = document.createElementNS(SVGns, 'svg');
     this._svg.setAttributeNS(null, 'preserveAspectRatio', 'none');
-    this._dotsContainer = document.createElementNS(SVGns, 'g');
-    this._ripplesContainer = document.createElementNS(SVGns, 'g');
-    this._svg.appendChild(this._dotsContainer);
-    this._svg.appendChild(this._ripplesContainer);
     this.rootNode.appendChild(this._svg);
 
     this.currentColor = color;
+  }
+
+  static get RendererType() {
+    return 'svg';
   }
 
   set currentColor(color) {
@@ -833,50 +985,51 @@ class SvgRenderer extends __WEBPACK_IMPORTED_MODULE_2__renderer_js__["a" /* defa
 
   draw(points, waves) {
     // Recycle dots elements, or add only new dots only if necessary.
+    let d;
     while (this._dots.length < points.length) {
-      const d = this._createDot();
-      this._dotsContainer.appendChild(d);
+      d = this._createDot();
+      this._svg.appendChild(d);
       this._dots.push(d);
     }
     while (this._dots.length > points.length) {
-      this._dotsContainer.removeChild(this._dotsContainer.lastChild);
+      this._svg.removeChild(this._svg.lastChild);
       this._dots.pop();
     }
 
+    // Transform dots.
     points.forEach((p, i) => {
       this._dots[i].setAttribute('transform',
           `translate(${p.displayX}, ${p.displayY}) scale(${p.size})`);
     });
 
     // Recycle ripple elements, or add only new ripples only if necessary.
+    let r;
     while (this._ripples.length < waves.length) {
-      const r = this._createRipple();
-      this._ripplesContainer.appendChild(r);
+      r = this._createRipple();
+      this._svg.appendChild(r);
       this._ripples.push(r);
     }
     while (this._ripples.length > waves.length) {
-      this._ripplesContainer.removeChild(this._ripplesContainer.lastChild);
+      this._svg.removeChild(this._svg.lastChild);
       this._ripples.pop();
     }
 
     // loop over waves -> ripples
+    let crestR, normalisedHalfCrest;
     waves.forEach((wave, i) => {
       // Draw wave pulse. Opacity gets lower as the wave grows.
-      const crestR = wave.getEasedCrestValue();
-      const ripple = this._ripples[i];
-      const normalisedHalfCrest = crestR / (wave.easingRadius / 2);
+      crestR = wave.getEasedCrestValue();
+      normalisedHalfCrest = crestR / (wave.easingRadius / 2);
 
       if (normalisedHalfCrest <= 1) {
-        ripple.style.fill = `rgba(${this._currentColor.foreground.r},
-            ${this._currentColor.foreground.g},
-            ${this._currentColor.foreground.b},
-            ${this._currentColor.foreground.waveMaxOpacity *
-                __WEBPACK_IMPORTED_MODULE_1__easing_js__["d" /* easeInQuart */](1 - normalisedHalfCrest)})`;
+        this._ripples[i].style.opacity =
+            this._currentColor.foreground.waveMaxOpacity *
+                __WEBPACK_IMPORTED_MODULE_1__easing_js__["d" /* easeInQuart */](1 - normalisedHalfCrest);
 
-        ripple.setAttribute('transform',
+        this._ripples[i].setAttribute('transform',
             `translate(${wave.x}, ${wave.y}) scale(${crestR})`);
       } else {
-        ripple.setAttribute('transform', 'scale(0)');
+        this._ripples[i].setAttribute('transform', 'scale(0)');
       }
     });
   }
@@ -903,7 +1056,7 @@ class SvgRenderer extends __WEBPACK_IMPORTED_MODULE_2__renderer_js__["a" /* defa
 
 
 /***/ }),
-/* 8 */
+/* 9 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
