@@ -17,10 +17,6 @@ export default class SvgRenderer extends AbstractRenderer {
     }
     this._svg = document.createElementNS(SVGns, 'svg');
     this._svg.setAttributeNS(null, 'preserveAspectRatio', 'none');
-    this._dotsContainer = document.createElementNS(SVGns, 'g');
-    this._ripplesContainer = document.createElementNS(SVGns, 'g');
-    this._svg.appendChild(this._dotsContainer);
-    this._svg.appendChild(this._ripplesContainer);
     this.rootNode.appendChild(this._svg);
 
     this.currentColor = color;
@@ -53,50 +49,51 @@ export default class SvgRenderer extends AbstractRenderer {
 
   draw(points, waves) {
     // Recycle dots elements, or add only new dots only if necessary.
+    let d;
     while (this._dots.length < points.length) {
-      const d = this._createDot();
-      this._dotsContainer.appendChild(d);
+      d = this._createDot();
+      this._svg.appendChild(d);
       this._dots.push(d);
     }
     while (this._dots.length > points.length) {
-      this._dotsContainer.removeChild(this._dotsContainer.lastChild);
+      this._svg.removeChild(this._svg.lastChild);
       this._dots.pop();
     }
 
+    // Transform dots.
     points.forEach((p, i) => {
       this._dots[i].setAttribute('transform',
           `translate(${p.displayX}, ${p.displayY}) scale(${p.size})`);
     });
 
     // Recycle ripple elements, or add only new ripples only if necessary.
+    let r;
     while (this._ripples.length < waves.length) {
-      const r = this._createRipple();
-      this._ripplesContainer.appendChild(r);
+      r = this._createRipple();
+      this._svg.appendChild(r);
       this._ripples.push(r);
     }
     while (this._ripples.length > waves.length) {
-      this._ripplesContainer.removeChild(this._ripplesContainer.lastChild);
+      this._svg.removeChild(this._svg.lastChild);
       this._ripples.pop();
     }
 
     // loop over waves -> ripples
+    let crestR, normalisedHalfCrest;
     waves.forEach((wave, i) => {
       // Draw wave pulse. Opacity gets lower as the wave grows.
-      const crestR = wave.getEasedCrestValue();
-      const ripple = this._ripples[i];
-      const normalisedHalfCrest = crestR / (wave.easingRadius / 2);
+      crestR = wave.getEasedCrestValue();
+      normalisedHalfCrest = crestR / (wave.easingRadius / 2);
 
       if (normalisedHalfCrest <= 1) {
-        ripple.style.fill = `rgba(${this._currentColor.foreground.r},
-            ${this._currentColor.foreground.g},
-            ${this._currentColor.foreground.b},
-            ${this._currentColor.foreground.waveMaxOpacity *
-                easing.easeInQuart(1 - normalisedHalfCrest)})`;
+        this._ripples[i].style.opacity =
+            this._currentColor.foreground.waveMaxOpacity *
+                easing.easeInQuart(1 - normalisedHalfCrest);
 
-        ripple.setAttribute('transform',
+        this._ripples[i].setAttribute('transform',
             `translate(${wave.x}, ${wave.y}) scale(${crestR})`);
       } else {
-        ripple.setAttribute('transform', 'scale(0)');
+        this._ripples[i].setAttribute('transform', 'scale(0)');
       }
     });
   }
