@@ -11,15 +11,17 @@ export default class Grid {
   /**
    * Creates an instance of Grid.
    * @param {number} gap Space (in px) between each point.
-   * @param {numberany} baseDotSize Size (in px) of each point.
+   * @param {number} baseDotSize Size (in px) of each point when idle.
+   * @param {number} maxDotSize Max size (in px) that each point can grow to.
    * @param {number} [posConst=1/20] Affects how much a wave's crest can move a dot.
    * @param {number} [sizeConst=3.5] Affects how much a wave's crest can scale a dot.
    *
    * @memberof Grid
    */
-  constructor(gap, baseDotSize, posConst = 1 / 20, sizeConst = 3.5) {
+  constructor(gap, baseDotSize, maxDotSize, posConst = 1/20, sizeConst = 3.5) {
     this.gap = gap;
     this.baseDotSize = baseDotSize;
+    this.maxDotSize = maxDotSize;
     this.posConst = posConst;
     this.sizeConst = sizeConst
 
@@ -96,6 +98,8 @@ export default class Grid {
           p.size += this.sizeConst * easing.easeInCubic(1 - distFromCrest / wave.crestAOE);
         }
       });
+
+      p.size = Math.min(p.size, this.maxDotSize);
 
       p.displayX -= p.size / 2;
       p.displayY -= p.size / 2;

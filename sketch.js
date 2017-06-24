@@ -46,6 +46,7 @@ export default class Sketch {
     return {
       gridGap: 40,
       gridDotSize: 2,
+      gridMaxDotSize: 16,
       waveCrestVelocity: 12,
       waveCrestDecay: 400,
       colorModes: {
@@ -70,7 +71,8 @@ export default class Sketch {
 
     // Public attributs
     this.sketchSize = {w: 0, h: 0, diagonal: 0};
-    this.grid = new Grid(this.options.gridGap, this.options.gridDotSize);
+    this.grid = new Grid(this.options.gridGap, this.options.gridDotSize,
+        this.options.gridMaxDotSize);
     this.waves = [];
 
     // Private attributes.
