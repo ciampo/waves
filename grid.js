@@ -23,7 +23,7 @@ export default class Grid {
     this.baseDotSize = baseDotSize;
     this.maxDotSize = maxDotSize;
     this.posConst = posConst;
-    this.sizeConst = sizeConst
+    this.sizeConst = sizeConst;
 
     this._distFromWaves = [];
     this._angleFromWaves = [];
@@ -92,10 +92,10 @@ export default class Grid {
           percDist = (wave.crestAOE - distFromCrest) / wave.crestAOE;
           easedPercDist = easing.easeInOutQuad(percDist) * wave.crestAOE;
 
-          p.displayX -= easedPercDist * this.posConst * Math.cos(angle);
-          p.displayY -= easedPercDist * this.posConst * Math.sin(angle);
+          p.displayX -= easedPercDist * this.posConst * Math.cos(angle) * wave.strength;
+          p.displayY -= easedPercDist * this.posConst * Math.sin(angle) * wave.strength;
 
-          p.size += this.sizeConst * easing.easeInCubic(1 - distFromCrest / wave.crestAOE);
+          p.size += this.sizeConst * easing.easeInCubic(1 - distFromCrest / wave.crestAOE) * wave.strength;
         }
       });
 

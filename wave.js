@@ -18,7 +18,7 @@ export default class Wave {
    *
    * @memberof Wave
    */
-  constructor(x, y, maxRadius, easingRadius, crestVelocity = 10, crestAOE, crestEasingFn = x => x) {
+  constructor(x, y, maxRadius, easingRadius, crestVelocity = 10, crestAOE, crestEasingFn = x => x, strength = 1, showPulseHalo = true) {
     this.x = x;
     this.y = y;
     this.maxRadius = maxRadius;
@@ -26,6 +26,8 @@ export default class Wave {
     this.crestVelocity = crestVelocity;
     this.crestAOE = crestAOE;
     this.crestEasingFn = crestEasingFn;
+    this.strength = strength;
+    this.showPulseHalo = showPulseHalo;
 
     this.crestRadius = 0;
   }

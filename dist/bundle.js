@@ -301,6 +301,23 @@ class AbstractRenderer {
 
 
 
+function throttle(callback, wait, context = this) {
+  let timeout = null
+  let callbackArgs = null
+
+  const later = () => {
+    callback.apply(context, callbackArgs)
+    timeout = null
+  }
+
+  return function() {
+    if (!timeout) {
+      callbackArgs = arguments
+      timeout = setTimeout(later, wait)
+    }
+  }
+}
+
 class Sketch {
 
   static get RendererTypes() {
@@ -376,14 +393,20 @@ class Sketch {
     // Binding functions.
     this.onResize = this.onResize.bind(this);
     this.onPointerUp = this.onPointerUp.bind(this);
+    this.onPointerDown = this.onPointerDown.bind(this);
+    this.onPointerMove = throttle(this.onPointerMove.bind(this), 16);
     this.drawFrame = this.drawFrame.bind(this);
 
+    this._root.addEventListener('pointerdown', this.onPointerDown, false);
     this._root.addEventListener('pointerup', this.onPointerUp, false);
+    this._root.addEventListener('pointermove', this.onPointerMove, false);
 
 
     this._colorMode = this.options.currentColorMode;
     // Triggers the creation of a new renderer.
     this.rendererType = this.options.rendererType;
+
+    this._isPointerDown = false;
   }
 
   set rendererType(r) {
@@ -446,6 +469,30 @@ class Sketch {
         this.options.waveCrestVelocity,
         this.options.waveCrestDecay,
         __WEBPACK_IMPORTED_MODULE_0__easing_js__["a" /* easeOutQuad */]));
+
+    this.grid.addWave();
+
+    this._isPointerDown = false;
+  }
+
+  onPointerDown() {
+    this._isPointerDown = true;
+  }
+
+  onPointerMove(evt) {
+    if (!this._isPointerDown) {
+      return;
+    }
+
+    const maxX = __WEBPACK_IMPORTED_MODULE_1__utils_js__["b" /* absMax */](evt.clientX, evt.clientX - this.sketchSize.w);
+    const maxY = __WEBPACK_IMPORTED_MODULE_1__utils_js__["b" /* absMax */](evt.clientY, evt.clientY - this.sketchSize.h);
+
+    this.waves.push(new __WEBPACK_IMPORTED_MODULE_2__wave_js__["a" /* default */](evt.clientX, evt.clientY,
+        (Math.sqrt(maxX * maxX + maxY * maxY) + this.options.waveCrestDecay),
+        (this.sketchSize.diagonal + this.options.waveCrestDecay),
+        this.options.waveCrestVelocity,
+        this.options.waveCrestDecay / 5,
+        __WEBPACK_IMPORTED_MODULE_0__easing_js__["a" /* easeOutQuad */], 0.2, false));
 
     this.grid.addWave();
   }
@@ -590,24 +637,26 @@ class CanvasRenderer extends __WEBPACK_IMPORTED_MODULE_2__renderer_js__["a" /* d
     this._ctx.fill();
 
     waves.forEach(wave => {
-      // Draw wave pulse. Opacity gets lower as the wave grows.
-      const crestR = wave.getEasedCrestValue();
-      const normalisedHalfCrest = crestR / (wave.easingRadius / 2);
+      if (wave.showPulseHalo) {
+        // Draw wave pulse. Opacity gets lower as the wave grows.
+        const crestR = wave.getEasedCrestValue();
+        const normalisedHalfCrest = crestR / (wave.easingRadius / 2);
 
-      if (normalisedHalfCrest < 1) {
-        // Using toFixed() prevents bug in Safari where the ripple
-        // would flash just before being removed.
-        this._ctx.fillStyle =
-          `rgba(${this._currentColor.foreground.r},
-                ${this._currentColor.foreground.g},
-                ${this._currentColor.foreground.b},
-                ${(this._currentColor.foreground.waveMaxOpacity *
-                    __WEBPACK_IMPORTED_MODULE_1__easing_js__["d" /* easeInQuart */](1 - normalisedHalfCrest)).toFixed(3)})`;
+        if (normalisedHalfCrest < 1) {
+          // Using toFixed() prevents bug in Safari where the ripple
+          // would flash just before being removed.
+          this._ctx.fillStyle =
+            `rgba(${this._currentColor.foreground.r},
+                  ${this._currentColor.foreground.g},
+                  ${this._currentColor.foreground.b},
+                  ${(this._currentColor.foreground.waveMaxOpacity *
+                      __WEBPACK_IMPORTED_MODULE_1__easing_js__["d" /* easeInQuart */](1 - normalisedHalfCrest)).toFixed(3)})`;
 
-        this._ctx.beginPath();
-        this._ctx.arc(wave.x * this._DPR, wave.y * this._DPR, crestR * this._DPR, 0, Math.PI * 2, true);
-        this._ctx.closePath();
-        this._ctx.fill();
+          this._ctx.beginPath();
+          this._ctx.arc(wave.x * this._DPR, wave.y * this._DPR, crestR * this._DPR, 0, Math.PI * 2, true);
+          this._ctx.closePath();
+          this._ctx.fill();
+        }
       }
     });
   }
@@ -783,7 +832,7 @@ class Grid {
     this.baseDotSize = baseDotSize;
     this.maxDotSize = maxDotSize;
     this.posConst = posConst;
-    this.sizeConst = sizeConst
+    this.sizeConst = sizeConst;
 
     this._distFromWaves = [];
     this._angleFromWaves = [];
@@ -852,10 +901,10 @@ class Grid {
           percDist = (wave.crestAOE - distFromCrest) / wave.crestAOE;
           easedPercDist = __WEBPACK_IMPORTED_MODULE_1__easing_js__["b" /* easeInOutQuad */](percDist) * wave.crestAOE;
 
-          p.displayX -= easedPercDist * this.posConst * Math.cos(angle);
-          p.displayY -= easedPercDist * this.posConst * Math.sin(angle);
+          p.displayX -= easedPercDist * this.posConst * Math.cos(angle) * wave.strength;
+          p.displayY -= easedPercDist * this.posConst * Math.sin(angle) * wave.strength;
 
-          p.size += this.sizeConst * __WEBPACK_IMPORTED_MODULE_1__easing_js__["c" /* easeInCubic */](1 - distFromCrest / wave.crestAOE);
+          p.size += this.sizeConst * __WEBPACK_IMPORTED_MODULE_1__easing_js__["c" /* easeInCubic */](1 - distFromCrest / wave.crestAOE) * wave.strength;
         }
       });
 
@@ -1087,7 +1136,7 @@ class Wave {
    *
    * @memberof Wave
    */
-  constructor(x, y, maxRadius, easingRadius, crestVelocity = 10, crestAOE, crestEasingFn = x => x) {
+  constructor(x, y, maxRadius, easingRadius, crestVelocity = 10, crestAOE, crestEasingFn = x => x, strength = 1, showPulseHalo = true) {
     this.x = x;
     this.y = y;
     this.maxRadius = maxRadius;
@@ -1095,6 +1144,8 @@ class Wave {
     this.crestVelocity = crestVelocity;
     this.crestAOE = crestAOE;
     this.crestEasingFn = crestEasingFn;
+    this.strength = strength;
+    this.showPulseHalo = showPulseHalo;
 
     this.crestRadius = 0;
   }
