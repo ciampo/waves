@@ -10,6 +10,7 @@
     "url": "https://github.com/ciampo/waves.git"
   },
   "devDependencies": {
+    "eslint": "^5.15.3",
     "webpack": "^2.6.0",
     "webpack-dev-server": "^2.4.5"
   },
