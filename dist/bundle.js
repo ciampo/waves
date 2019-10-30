@@ -359,8 +359,8 @@ class Sketch {
       gridGap: 40,
       gridDotSize: 2,
       gridMaxDotSize: 16,
-      waveCrestVelocity: 12,
-      waveCrestDecay: 400,
+      waveCrestVelocity: 8,
+      waveCrestDecay: 200,
       colorModes: {
         [Sketch.ColorModeDark]: {
           background: {r: 40, g: 40, b: 40, waveMaxOpacity: 0.02},
@@ -407,6 +407,7 @@ class Sketch {
     this.rendererType = this.options.rendererType;
 
     this._isPointerDown = false;
+    this._didPointerMove = false;
   }
 
   set rendererType(r) {
@@ -459,24 +460,36 @@ class Sketch {
     this.renderer.resize(this.sketchSize.w, this.sketchSize.h);
   }
 
-  onPointerUp(evt) {
+  _addWave(evt, opt_weak) {
     const maxX = __WEBPACK_IMPORTED_MODULE_1__utils_js__["b" /* absMax */](evt.clientX, evt.clientX - this.sketchSize.w);
     const maxY = __WEBPACK_IMPORTED_MODULE_1__utils_js__["b" /* absMax */](evt.clientY, evt.clientY - this.sketchSize.h);
 
-    this.waves.push(new __WEBPACK_IMPORTED_MODULE_2__wave_js__["a" /* default */](evt.clientX, evt.clientY,
+    this.waves.push(new __WEBPACK_IMPORTED_MODULE_2__wave_js__["a" /* default */](
+        evt.clientX,
+        evt.clientY,
         Math.sqrt(maxX * maxX + maxY * maxY) + this.options.waveCrestDecay,
         this.sketchSize.diagonal + this.options.waveCrestDecay,
         this.options.waveCrestVelocity,
-        this.options.waveCrestDecay,
-        __WEBPACK_IMPORTED_MODULE_0__easing_js__["a" /* easeOutQuad */]));
+        opt_weak ? this.options.waveCrestDecay / 6 : this.options.waveCrestDecay,
+        __WEBPACK_IMPORTED_MODULE_0__easing_js__["a" /* easeOutQuad */],
+        opt_weak ? 0.7 : 2.5,
+        !opt_weak
+    ));
 
     this.grid.addWave();
+  }
+
+  onPointerUp(evt) {
+    if (!this._didPointerMove) {
+      this._addWave(evt);
+    }
 
     this._isPointerDown = false;
   }
 
   onPointerDown() {
     this._isPointerDown = true;
+    this._didPointerMove = false;
   }
 
   onPointerMove(evt) {
@@ -484,17 +497,9 @@ class Sketch {
       return;
     }
 
-    const maxX = __WEBPACK_IMPORTED_MODULE_1__utils_js__["b" /* absMax */](evt.clientX, evt.clientX - this.sketchSize.w);
-    const maxY = __WEBPACK_IMPORTED_MODULE_1__utils_js__["b" /* absMax */](evt.clientY, evt.clientY - this.sketchSize.h);
+    this._didPointerMove = true;
 
-    this.waves.push(new __WEBPACK_IMPORTED_MODULE_2__wave_js__["a" /* default */](evt.clientX, evt.clientY,
-        (Math.sqrt(maxX * maxX + maxY * maxY) + this.options.waveCrestDecay),
-        (this.sketchSize.diagonal + this.options.waveCrestDecay),
-        this.options.waveCrestVelocity,
-        this.options.waveCrestDecay / 5,
-        __WEBPACK_IMPORTED_MODULE_0__easing_js__["a" /* easeOutQuad */], 0.2, false));
-
-    this.grid.addWave();
+    this._addWave(evt, true);
   }
 
   drawFrame() {
@@ -518,6 +523,7 @@ class Sketch {
 }
 /* harmony export (immutable) */ __webpack_exports__["a"] = Sketch;
 ;
+
 
 /***/ }),
 /* 4 */
@@ -583,6 +589,7 @@ class CanvasRenderer extends __WEBPACK_IMPORTED_MODULE_2__renderer_js__["a" /* d
     }
     this._canvas = document.createElement('canvas');
     this._ctx = this._canvas.getContext('2d');
+    this._ctx.imageSmoothingEnabled = true;
     rootNode.appendChild(this._canvas);
 
     // Device pixel ratio.
@@ -662,6 +669,7 @@ class CanvasRenderer extends __WEBPACK_IMPORTED_MODULE_2__renderer_js__["a" /* d
   }
 }
 /* harmony export (immutable) */ __webpack_exports__["a"] = CanvasRenderer;
+
 
 
 /***/ }),
