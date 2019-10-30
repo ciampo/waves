@@ -64,8 +64,8 @@ export default class Sketch {
       gridGap: 40,
       gridDotSize: 2,
       gridMaxDotSize: 16,
-      waveCrestVelocity: 12,
-      waveCrestDecay: 400,
+      waveCrestVelocity: 8,
+      waveCrestDecay: 200,
       colorModes: {
         [Sketch.ColorModeDark]: {
           background: {r: 40, g: 40, b: 40, waveMaxOpacity: 0.02},
@@ -112,6 +112,7 @@ export default class Sketch {
     this.rendererType = this.options.rendererType;
 
     this._isPointerDown = false;
+    this._didPointerMove = false;
   }
 
   set rendererType(r) {
@@ -164,24 +165,36 @@ export default class Sketch {
     this.renderer.resize(this.sketchSize.w, this.sketchSize.h);
   }
 
-  onPointerUp(evt) {
+  _addWave(evt, opt_weak) {
     const maxX = utils.absMax(evt.clientX, evt.clientX - this.sketchSize.w);
     const maxY = utils.absMax(evt.clientY, evt.clientY - this.sketchSize.h);
 
-    this.waves.push(new Wave(evt.clientX, evt.clientY,
+    this.waves.push(new Wave(
+        evt.clientX,
+        evt.clientY,
         Math.sqrt(maxX * maxX + maxY * maxY) + this.options.waveCrestDecay,
         this.sketchSize.diagonal + this.options.waveCrestDecay,
         this.options.waveCrestVelocity,
-        this.options.waveCrestDecay,
-        easing.easeOutQuad));
+        opt_weak ? this.options.waveCrestDecay / 6 : this.options.waveCrestDecay,
+        easing.easeOutQuad,
+        opt_weak ? 0.7 : 2.5,
+        !opt_weak
+    ));
 
     this.grid.addWave();
+  }
+
+  onPointerUp(evt) {
+    if (!this._didPointerMove) {
+      this._addWave(evt);
+    }
 
     this._isPointerDown = false;
   }
 
   onPointerDown() {
     this._isPointerDown = true;
+    this._didPointerMove = false;
   }
 
   onPointerMove(evt) {
@@ -189,17 +202,9 @@ export default class Sketch {
       return;
     }
 
-    const maxX = utils.absMax(evt.clientX, evt.clientX - this.sketchSize.w);
-    const maxY = utils.absMax(evt.clientY, evt.clientY - this.sketchSize.h);
+    this._didPointerMove = true;
 
-    this.waves.push(new Wave(evt.clientX, evt.clientY,
-        (Math.sqrt(maxX * maxX + maxY * maxY) + this.options.waveCrestDecay),
-        (this.sketchSize.diagonal + this.options.waveCrestDecay),
-        this.options.waveCrestVelocity,
-        this.options.waveCrestDecay / 5,
-        easing.easeOutQuad, 0.2, false));
-
-    this.grid.addWave();
+    this._addWave(evt, true);
   }
 
   drawFrame() {
