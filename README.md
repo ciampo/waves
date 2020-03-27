@@ -1,4 +1,7 @@
 # Waves
+
+https://ciampo.github.io/waves
+
 Code experiment on 2d graphics. The aim is to reproduce the propagation of
 waves across a grid of dots, seen fro a bird's eye perspective.
 
